@@ -54,3 +54,4 @@ Format: `date/hour | who | IDs | change | tests | next | blockers`
 - 2026-09-29 | Team | FR-18 | App shell, mode tabs, interactive column config panel with Zod, live 300ms debounced preview grid, ProofBar | T-18a, T-18b | M2 relational | none
 - 2026-09-29 | Team | FR-03, FR-04 | Topological relational generator with zero orphans, N:N deduplication, self-referencing FK, cross-table invariants (sum_children, temporal_order) | T-03a–e, T-04a–c | M2 export | none
 - 2026-09-29 | Team | FR-13 | Formula-safe CSV, JSONL, PostgreSQL/SQLite DDL and INSERT exporter, SQLite binary DB, and full ZIP bundle | T-13a–c | M2 profiler | none
+- 2026-09-29 | Team | FR-18 | Interactive ER diagram with React Flow, crow's foot cardinalities, link editor, and bottom split preview | T-18a, T-18b | M2 profiler | none
