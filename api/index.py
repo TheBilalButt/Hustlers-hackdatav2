@@ -5,6 +5,9 @@ Reference: TRD §10.
 """
 from __future__ import annotations
 
+import io
+import json
+import zipfile
 from typing import Any
 
 from fastapi import FastAPI, Request, Response
@@ -12,6 +15,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from synth.config import settings
+from synth.documents.invoice import generate_invoice, generate_invoices_from_dataset
+from synth.documents.render_pdf import render_invoice_pdf, render_statement_pdf
+from synth.documents.statement import generate_statement, generate_statements_from_dataset
 from synth.engines.relational import generate_relational
 from synth.engines.tabular import compute_dataset_hash, generate_table
 from synth.export.bundle import create_export_bundle
@@ -22,6 +28,7 @@ from synth.export.sqlite import export_sqlite_bytes
 from synth.ir.models import Dataset
 from synth.llm.router import LLMRouter
 from synth.profiler.profile import profile_columns, profile_to_ir
+from synth.security.limits import check_doc_limit
 from synth.security.uploads import MAX_UPLOAD_BYTES, parse_upload_rows, validate_upload
 
 app = FastAPI(
@@ -65,7 +72,6 @@ async def preview(request: Request) -> Any:
     except Exception:
         return _problem(400, "Invalid JSON body", "VALIDATION_FAILED")
 
-    # Handle {"recipe": ...}, {"dataset": ...}, or top-level Dataset dict
     raw_recipe = None
     limit_val = 50
     if isinstance(body, dict):
@@ -276,14 +282,12 @@ async def profile(request: Request) -> Any:
                 raw_text = body["content"]
                 file_bytes = raw_text.encode("utf-8") if isinstance(raw_text, str) else b""
             else:
-                # Raw JSON array or object
                 file_bytes = raw_body
                 if not filename.endswith(".json"):
                     filename = "sample.json"
         except Exception:
             file_bytes = raw_body
     else:
-        # text/csv, application/octet-stream, etc.
         file_bytes = await request.body()
         if not (filename.endswith(".csv") or filename.endswith(".json")):
             filename = "sample.csv"
@@ -315,15 +319,73 @@ async def profile(request: Request) -> Any:
         return _problem(400, f"Profiling failed: {err}", "UPLOAD_REJECTED")
 
 
+@app.post("/api/documents")
+async def documents(request: Request) -> Any:
+    """Generate invoice or statement PDFs with watermark and provenance metadata.
+
+    Covers FR-06, FR-07, FR-17.
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        return _problem(400, "Invalid JSON body", "BAD_REQUEST")
+
+    raw_recipe = body.get("recipe")
+    kind = body.get("kind", "invoice").lower()
+    count = int(body.get("count", 5))
+
+    doc_limit_err = check_doc_limit(count)
+    if doc_limit_err:
+        msg = f"Count {count} exceeds max limit of 50 PDFs per request"
+        return _problem(400, msg, doc_limit_err)
+
+    try:
+        dataset = Dataset.model_validate(raw_recipe) if raw_recipe else None
+    except Exception as err:
+        return _problem(422, f"Invalid recipe IR: {err}", "VALIDATION_FAILED")
+
+    zip_buffer = io.BytesIO()
+    ground_truth_lines: list[str] = []
+
+    try:
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+            if kind == "statement":
+                statements = (
+                    generate_statements_from_dataset(dataset, count=count)
+                    if dataset
+                    else [generate_statement(index=i) for i in range(1, count + 1)]
+                )
+                for stmt in statements:
+                    pdf_bytes, gt = render_statement_pdf(stmt)
+                    zf.writestr(f"documents/{stmt.number}.pdf", pdf_bytes)
+                    ground_truth_lines.append(json.dumps(gt))
+            else:
+                invoices = (
+                    generate_invoices_from_dataset(dataset, count=count)
+                    if dataset
+                    else [generate_invoice(index=i) for i in range(1, count + 1)]
+                )
+                for inv in invoices:
+                    pdf_bytes, gt = render_invoice_pdf(inv)
+                    zf.writestr(f"documents/{inv.number}.pdf", pdf_bytes)
+                    ground_truth_lines.append(json.dumps(gt))
+
+            gt_content = "\n".join(ground_truth_lines) + "\n"
+            zf.writestr("ground_truth.part.jsonl", gt_content)
+
+        zip_bytes = zip_buffer.getvalue()
+        return Response(
+            content=zip_bytes,
+            media_type="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{kind}s.zip"'},
+        )
+    except Exception as e:
+        return _problem(500, f"Document generation failed: {e}", "GENERATION_FAILED")
+
+
 @app.post("/api/trust")
 async def trust(request: Request) -> dict[str, Any]:
     """Compute the Trust Report."""
-    return _problem(501, "Not implemented", "VALIDATION_FAILED")
-
-
-@app.post("/api/documents")
-async def documents(request: Request) -> dict[str, Any]:
-    """Generate invoice or statement PDFs."""
     return _problem(501, "Not implemented", "VALIDATION_FAILED")
 
 

@@ -57,3 +57,4 @@ Format: `date/hour | who | IDs | change | tests | next | blockers`
 - 2026-09-29 | Team | FR-18 | Interactive ER diagram with React Flow, crow's foot cardinalities, link editor, and bottom split preview | T-18a, T-18b | M2 profiler | none
 - 2026-09-29 | Team | FR-09 | Deterministic sample profiling (CSV/JSON upload validation, types/stats, PII detection, winsorized bounds, redacted prompt masking, profile-to-IR) | T-09a, T-09b, RT-01..RT-26 | M2 prompt-to-dataset | none
 - 2026-09-29 | Team | FR-10 | Natural language prompt-to-IR with spotlighting, canary tokens, and 30-case golden test set | T-10a, T-10b, RT-04, RT-05, RT-08, RT-24, RT-31 | M3 documents | none
+2026-09-29 | feat(documents) | Invoices, bank statements, fpdf2 programmatic PDF rendering with mandatory watermark and ground truth JSONL [FR-06, FR-07, FR-17] | Passed 8 tests (T-06a-d, T-07a-c, T-17a-d)
