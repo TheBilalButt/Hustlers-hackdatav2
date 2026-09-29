@@ -10,6 +10,8 @@ export const ProofBar: React.FC = () => {
     previewLatency,
     isGenerating,
     getEstimates,
+    toggleTrustDrawer,
+    isTrustDrawerOpen,
   } = useAppStore();
 
   const [copied, setCopied] = useState(false);
@@ -27,19 +29,62 @@ export const ProofBar: React.FC = () => {
 
   return (
     <aside className="proof-bar" aria-label="Proof and Invariants Bar">
-      <div className="proof-verdicts">
-        <div className="verdict-badge pass" title={trustReport.correct_reason}>
-          <span className="verdict-icon" aria-hidden="true">✓</span>
+      <div className="proof-verdicts" role="region" aria-label="Trust verdicts">
+        <button
+          type="button"
+          className={`verdict-badge ${trustReport.correct_verdict || 'pass'}`}
+          title={`${trustReport.correct_reason} (Click to open Trust Report)`}
+          onClick={() => toggleTrustDrawer(true)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}
+        >
+          <span className="verdict-icon" aria-hidden="true">
+            {trustReport.correct_verdict === 'fail' ? '✗' : trustReport.correct_verdict === 'warn' ? '!' : '✓'}
+          </span>
           <span className="verdict-text">Correct</span>
-        </div>
-        <div className="verdict-badge pass" title={trustReport.realistic_reason}>
-          <span className="verdict-icon" aria-hidden="true">✓</span>
+        </button>
+        <button
+          type="button"
+          className={`verdict-badge ${trustReport.realistic_verdict || 'pass'}`}
+          title={`${trustReport.realistic_reason} (Click to open Trust Report)`}
+          onClick={() => toggleTrustDrawer(true)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}
+        >
+          <span className="verdict-icon" aria-hidden="true">
+            {trustReport.realistic_verdict === 'fail' ? '✗' : trustReport.realistic_verdict === 'warn' ? '!' : '✓'}
+          </span>
           <span className="verdict-text">Realistic</span>
-        </div>
-        <div className="verdict-badge pass" title={trustReport.safe_reason}>
-          <span className="verdict-icon" aria-hidden="true">✓</span>
+        </button>
+        <button
+          type="button"
+          className={`verdict-badge ${trustReport.safe_verdict || 'pass'}`}
+          title={`${trustReport.safe_reason} (Click to open Trust Report)`}
+          onClick={() => toggleTrustDrawer(true)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}
+        >
+          <span className="verdict-icon" aria-hidden="true">
+            {trustReport.safe_verdict === 'fail' ? '✗' : trustReport.safe_verdict === 'warn' ? '!' : '✓'}
+          </span>
           <span className="verdict-text">Safe</span>
-        </div>
+        </button>
+        <button
+          type="button"
+          className="btn-text-action"
+          onClick={() => toggleTrustDrawer()}
+          title="Toggle Trust Report drawer"
+          style={{
+            fontSize: 11,
+            color: 'var(--teal)',
+            fontWeight: 600,
+            background: 'rgba(22, 122, 109, 0.08)',
+            border: '1px solid rgba(22, 122, 109, 0.2)',
+            padding: '2px 8px',
+            borderRadius: 4,
+            cursor: 'pointer',
+            marginLeft: 4,
+          }}
+        >
+          {isTrustDrawerOpen ? 'Close Report ✕' : 'Trust Report ↗'}
+        </button>
       </div>
 
       <div className="proof-details">

@@ -229,10 +229,11 @@ export type Verdict = 'pass' | 'warn' | 'fail' | 'n_a';
 
 export interface MetricDetail {
   name: string;
-  value: number | string;
+  value: number | string | null;
   threshold: string;
   verdict: Verdict;
   details?: string;
+  detail?: string;
 }
 
 export interface TrustReport {
@@ -244,4 +245,25 @@ export interface TrustReport {
   safe_verdict: Verdict;
   safe_reason: string;
   metrics: Record<string, MetricDetail>;
+}
+
+export interface BackendMetricResult {
+  name: string;
+  value: number | string | null;
+  threshold: string;
+  verdict: Verdict;
+  detail: string;
+}
+
+export interface BackendTrustCard {
+  name: 'correct' | 'realistic' | 'safe';
+  verdict: Verdict;
+  reason: string;
+  metrics: BackendMetricResult[];
+}
+
+export interface BackendTrustReport {
+  cards: BackendTrustCard[];
+  engine_version: string;
+  dataset_hash: string;
 }

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Dataset, Table, Column, LocaleCode, TrustReport } from '../types/ir';
+import type { Dataset, Table, Column, LocaleCode, TrustReport, BackendTrustReport, MetricDetail } from '../types/ir';
 import { PRESETS, PRESET_ECOMMERCE } from './presets';
 
 export type AppMode = 'tabular' | 'relational' | 'documents';
@@ -53,6 +53,10 @@ interface AppState {
   trustReport: TrustReport;
   isOffline: boolean;
   setIsOffline: (offline: boolean) => void;
+
+  isTrustDrawerOpen: boolean;
+  toggleTrustDrawer: (open?: boolean) => void;
+  setBackendTrustReport: (report: BackendTrustReport) => void;
 
   getEstimates: () => SizeEstimates;
 }
@@ -240,6 +244,33 @@ export const useAppStore = create<AppState>((set, get) => ({
   trustReport: defaultTrustReport,
   isOffline: false,
   setIsOffline: (isOffline) => set({ isOffline }),
+
+  isTrustDrawerOpen: false,
+  toggleTrustDrawer: (open) => set((s) => ({ isTrustDrawerOpen: open !== undefined ? open : !s.isTrustDrawerOpen })),
+  setBackendTrustReport: (report: BackendTrustReport) => {
+    if (!report || !report.cards) return;
+    const correctCard = report.cards.find((c) => c.name === 'correct');
+    const realisticCard = report.cards.find((c) => c.name === 'realistic');
+    const safeCard = report.cards.find((c) => c.name === 'safe');
+    const metricsMap: Record<string, MetricDetail> = {};
+    report.cards.forEach((c) => {
+      c.metrics.forEach((m) => {
+        metricsMap[m.name] = m;
+      });
+    });
+    set({
+      trustReport: {
+        overall_verdict: report.cards.some((c) => c.verdict === 'fail') ? 'fail' : report.cards.some((c) => c.verdict === 'warn') ? 'warn' : 'pass',
+        correct_verdict: correctCard?.verdict || 'pass',
+        correct_reason: correctCard?.reason || '',
+        realistic_verdict: realisticCard?.verdict || 'pass',
+        realistic_reason: realisticCard?.reason || '',
+        safe_verdict: safeCard?.verdict || 'pass',
+        safe_reason: safeCard?.reason || '',
+        metrics: metricsMap,
+      }
+    });
+  },
 
   getEstimates: () => {
     const { dataset } = get();

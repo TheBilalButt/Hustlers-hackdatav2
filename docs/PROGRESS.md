@@ -59,3 +59,4 @@ Format: `date/hour | who | IDs | change | tests | next | blockers`
 - 2026-09-29 | Team | FR-10 | Natural language prompt-to-IR with spotlighting, canary tokens, and 30-case golden test set | T-10a, T-10b, RT-04, RT-05, RT-08, RT-24, RT-31 | M3 documents | none
 2026-09-29 | feat(documents) | Invoices, bank statements, fpdf2 programmatic PDF rendering with mandatory watermark and ground truth JSONL [FR-06, FR-07, FR-17] | Passed 8 tests (T-06a-d, T-07a-c, T-17a-d)
 2026-09-29 | feat(trust) | Validity, fidelity, and privacy metrics with Trust Report JSON [FR-12] | Passed 8 tests (T-12a-c, RT-25, parity)
+2026-09-29 | feat(ui) | Documents view with PDF preview, template switcher, and trust drawer [FR-06, FR-07, FR-12] | Passed typecheck, lint, build
