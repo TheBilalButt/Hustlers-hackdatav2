@@ -1,4 +1,4 @@
-"""JSONL export encoder."""
+﻿"""JSONL export encoder."""
 
 from __future__ import annotations
 
@@ -12,3 +12,6 @@ def encode_jsonl(rows: list[dict[str, Any]]) -> str:
     for row in rows:
         lines.append(json.dumps(row, default=str, ensure_ascii=False))
     return "\n".join(lines) + "\n"
+
+
+export_jsonl = encode_jsonl

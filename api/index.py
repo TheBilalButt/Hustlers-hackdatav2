@@ -1,7 +1,7 @@
-﻿"""FastAPI application — Vercel serverless entry point.
+﻿"""FastAPI application - Vercel serverless entry point.
 
 All routes under /api. Errors use RFC 9457 problem+json.
-Reference: TRD § 10.
+Reference: TRD §10.
 """
 from __future__ import annotations
 
@@ -15,10 +15,14 @@ from synth.config import settings
 from synth.engines.relational import generate_relational
 from synth.engines.tabular import compute_dataset_hash, generate_table
 from synth.export.bundle import create_export_bundle
+from synth.export.csv_safe import export_csv
+from synth.export.jsonl import export_jsonl
 from synth.export.sql import generate_dataset_sql
 from synth.export.sqlite import export_sqlite_bytes
 from synth.ir.models import Dataset
 from synth.llm.router import LLMRouter
+from synth.profiler.profile import profile_columns, profile_to_ir
+from synth.security.uploads import MAX_UPLOAD_BYTES, parse_upload_rows, validate_upload
 
 app = FastAPI(
     title="HackDataV2 Synthetic Data Platform",
@@ -59,126 +63,160 @@ async def preview(request: Request) -> Any:
     try:
         body = await request.json()
     except Exception:
-        return _problem(400, "Invalid JSON body", "BAD_REQUEST")
+        return _problem(400, "Invalid JSON body", "VALIDATION_FAILED")
+
+    # Handle {"recipe": ...}, {"dataset": ...}, or top-level Dataset dict
+    raw_recipe = None
+    limit_val = 50
+    if isinstance(body, dict):
+        raw_recipe = body.get("recipe") or body.get("dataset") or body
+        if "limit" in body:
+            try:
+                limit_val = int(body["limit"])
+            except (ValueError, TypeError):
+                limit_val = 50
+    else:
+        raw_recipe = body
 
     try:
-        raw_ds = body.get("dataset", body) if isinstance(body, dict) else body
-        limit = body.get("limit", 50) if isinstance(body, dict) and "limit" in body else 50
-        dataset = Dataset.model_validate(raw_ds)
-    except Exception as e:
-        return _problem(422, f"Validation error: {e}", "VALIDATION_FAILED")
+        dataset = Dataset.model_validate(raw_recipe)
+    except Exception as err:
+        return _problem(422, f"Invalid recipe IR: {err}", "VALIDATION_FAILED")
 
     try:
-        if dataset.relationships or dataset.invariants:
-            rows_per_table = generate_relational(dataset, max_rows=limit)
-        else:
-            rows_per_table = {}
-            for table in dataset.tables:
-                rows_per_table[table.name] = generate_table(dataset, table.name, max_rows=limit)
+        all_tables_rows = _get_dataset_rows(dataset)
+        tables_preview = {name: rows[:limit_val] for name, rows in all_tables_rows.items()}
+        row_plan = {name: len(rows) for name, rows in all_tables_rows.items()}
+        dataset_hash = compute_dataset_hash(dataset, all_tables_rows)
 
-        dataset_hash = compute_dataset_hash(dataset, rows_per_table)
+        total_est_bytes = sum(len(r) * 64 for r in all_tables_rows.values())
+
         return {
-            "rows": rows_per_table,
+            "tables": tables_preview,
+            "rows": tables_preview,
+            "row_plan": row_plan,
+            "est_bytes": total_est_bytes,
+            "correct": True,
             "hash": dataset_hash,
             "seed": dataset.seed,
         }
-    except ValueError as e:
-        valid_codes = ("LIMIT_ROWS", "LIMIT_FANOUT", "LIMIT_SCHEMA")
-        code = str(e) if str(e) in valid_codes else "GENERATION_FAILED"
-        return _problem(400, f"Generation error: {e}", code)
+    except Exception as e:
+        return _problem(500, f"Preview generation failed: {e}", "GENERATION_FAILED")
 
 
 @app.post("/api/generate")
 async def generate(request: Request) -> Any:
-    """Generate full dataset rows for all tables (FR-01, FR-03)."""
+    """Generate a data chunk for a table in requested format (FR-01, FR-03, FR-13)."""
     try:
         body = await request.json()
     except Exception:
-        return _problem(400, "Invalid JSON body", "BAD_REQUEST")
+        return _problem(400, "Invalid JSON body", "VALIDATION_FAILED")
+
+    raw_recipe = body.get("recipe") or body.get("dataset")
+    table_name = body.get("table")
+    fmt = body.get("format", "csv").lower()
+
+    if not raw_recipe or not table_name:
+        return _problem(400, "Missing 'recipe' or 'table' in request", "VALIDATION_FAILED")
 
     try:
-        raw_ds = body.get("dataset", body) if isinstance(body, dict) else body
-        dataset = Dataset.model_validate(raw_ds)
+        dataset = Dataset.model_validate(raw_recipe)
+    except Exception as err:
+        return _problem(422, f"Invalid recipe IR: {err}", "VALIDATION_FAILED")
+
+    try:
+        all_rows = _get_dataset_rows(dataset)
+        rows = all_rows.get(table_name, [])
+        table_obj = next((t for t in dataset.tables if t.name == table_name), None)
+        if table_obj:
+            columns = [c.name for c in table_obj.columns]
+        else:
+            columns = list(rows[0].keys()) if rows else []
+
+        if fmt == "csv":
+            content = export_csv(rows, columns)
+            media_type = "text/csv; charset=utf-8"
+        elif fmt == "jsonl":
+            content = export_jsonl(rows)
+            media_type = "application/x-ndjson; charset=utf-8"
+        elif fmt == "sql":
+            content = generate_dataset_sql(dataset, all_rows)
+            media_type = "application/sql; charset=utf-8"
+        else:
+            return _problem(400, f"Unsupported format: {fmt}", "VALIDATION_FAILED")
+
+        return Response(
+            content=content,
+            media_type=media_type,
+            headers={
+                "X-Block-Range": f"0-{len(rows)}",
+                "Content-Disposition": f'attachment; filename="{table_name}.{fmt}"',
+            },
+        )
     except Exception as e:
-        return _problem(422, f"Validation error: {e}", "VALIDATION_FAILED")
-
-    try:
-        rows = _get_dataset_rows(dataset)
-        dataset_hash = compute_dataset_hash(dataset, rows)
-        return {
-            "rows": rows,
-            "hash": dataset_hash,
-            "seed": dataset.seed,
-        }
-    except ValueError as e:
-        valid_codes = ("LIMIT_ROWS", "LIMIT_FANOUT", "LIMIT_SCHEMA")
-        code = str(e) if str(e) in valid_codes else "GENERATION_FAILED"
-        return _problem(400, f"Generation error: {e}", code)
+        return _problem(500, f"Generation failed: {e}", "GENERATION_FAILED")
 
 
 @app.post("/api/export/sql")
 async def export_sql(request: Request) -> Any:
-    """Export complete SQL DDL and INSERT script (FR-13)."""
+    """Export dataset as full SQL DDL and INSERT statements (FR-13)."""
     try:
         body = await request.json()
-        raw_ds = body.get("dataset", body)
-        dataset = Dataset.model_validate(raw_ds)
-    except Exception as e:
-        return _problem(422, f"Validation error: {e}", "VALIDATION_FAILED")
-
-    rows = _get_dataset_rows(dataset)
-    sql_text = generate_dataset_sql(dataset, rows)
-    clean_name = dataset.name.replace(" ", "_")
-    return Response(
-        content=sql_text,
-        media_type="application/sql",
-        headers={"Content-Disposition": f'attachment; filename="{clean_name}.sql"'},
-    )
+        raw_recipe = body.get("recipe") or body.get("dataset") or body
+        dataset = Dataset.model_validate(raw_recipe)
+        all_rows = _get_dataset_rows(dataset)
+        sql_content = generate_dataset_sql(dataset, all_rows)
+        return Response(
+            content=sql_content,
+            media_type="application/sql; charset=utf-8",
+            headers={"Content-Disposition": f'attachment; filename="{dataset.name}.sql"'},
+        )
+    except Exception as err:
+        return _problem(422, f"SQL export failed: {err}", "VALIDATION_FAILED")
 
 
 @app.post("/api/export/sqlite")
 async def export_sqlite(request: Request) -> Any:
-    """Export binary SQLite database file (FR-13)."""
+    """Export dataset as a binary .sqlite database (FR-13)."""
     try:
         body = await request.json()
-        raw_ds = body.get("dataset", body)
-        dataset = Dataset.model_validate(raw_ds)
-    except Exception as e:
-        return _problem(422, f"Validation error: {e}", "VALIDATION_FAILED")
-
-    rows = _get_dataset_rows(dataset)
-    db_bytes = export_sqlite_bytes(dataset, rows)
-    clean_name = dataset.name.replace(" ", "_")
-    return Response(
-        content=db_bytes,
-        media_type="application/vnd.sqlite3",
-        headers={"Content-Disposition": f'attachment; filename="{clean_name}.sqlite"'},
-    )
+        raw_recipe = body.get("recipe") or body.get("dataset") or body
+        dataset = Dataset.model_validate(raw_recipe)
+        all_rows = _get_dataset_rows(dataset)
+        sqlite_bytes = export_sqlite_bytes(dataset, all_rows)
+        if len(sqlite_bytes) > 4 * 1024 * 1024:
+            msg = "SQLite database exceeds 4 MB limit; use .sql export instead"
+            return _problem(413, msg, "LIMIT_ROWS")
+        return Response(
+            content=sqlite_bytes,
+            media_type="application/x-sqlite3",
+            headers={"Content-Disposition": f'attachment; filename="{dataset.name}.sqlite"'},
+        )
+    except Exception as err:
+        return _problem(422, f"SQLite export failed: {err}", "VALIDATION_FAILED")
 
 
 @app.post("/api/export/bundle")
 async def export_bundle(request: Request) -> Any:
-    """Export complete ZIP archive bundle with all formats and manifests (FR-13)."""
+    """Export dataset as a comprehensive ZIP bundle (FR-13)."""
     try:
         body = await request.json()
-        raw_ds = body.get("dataset", body)
-        dataset = Dataset.model_validate(raw_ds)
-    except Exception as e:
-        return _problem(422, f"Validation error: {e}", "VALIDATION_FAILED")
-
-    rows = _get_dataset_rows(dataset)
-    zip_bytes = create_export_bundle(dataset, rows)
-    clean_name = dataset.name.replace(" ", "_")
-    return Response(
-        content=zip_bytes,
-        media_type="application/zip",
-        headers={"Content-Disposition": f'attachment; filename="{clean_name}_bundle.zip"'},
-    )
+        raw_recipe = body.get("recipe") or body.get("dataset") or body
+        dataset = Dataset.model_validate(raw_recipe)
+        all_rows = _get_dataset_rows(dataset)
+        zip_bytes = create_export_bundle(dataset, all_rows)
+        return Response(
+            content=zip_bytes,
+            media_type="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{dataset.name}_bundle.zip"'},
+        )
+    except Exception as err:
+        return _problem(422, f"Bundle export failed: {err}", "VALIDATION_FAILED")
 
 
 @app.post("/api/plan")
 async def plan(request: Request) -> Any:
-    """Generate or refine an IR from a prompt or profile (FR-10, FR-16)."""
+    """Invoke the LLM router for dataset planning or prompt-to-IR (FR-10, FR-16)."""
     try:
         body = await request.json()
     except Exception:
@@ -214,9 +252,67 @@ async def query_parse(request: Request) -> Any:
 
 
 @app.post("/api/profile")
-async def profile(request: Request) -> dict[str, Any]:
-    """Profile an uploaded CSV or JSON sample."""
-    return _problem(501, "Not implemented", "VALIDATION_FAILED")
+async def profile(request: Request) -> Any:
+    """Profile an uploaded CSV or JSON sample (FR-09, TRD §2, §10, RT-18..RT-21, RT-26)."""
+    content_type = request.headers.get("content-type", "").lower()
+    filename = request.headers.get("x-filename", "sample.csv")
+    file_bytes = b""
+
+    if "multipart/form-data" in content_type:
+        form = await request.form()
+        uploaded_file = form.get("file")
+        if not uploaded_file:
+            return _problem(400, "No file provided in multipart upload", "UPLOAD_REJECTED")
+        if hasattr(uploaded_file, "filename") and uploaded_file.filename:
+            filename = uploaded_file.filename
+        if hasattr(uploaded_file, "read"):
+            file_bytes = await uploaded_file.read()
+    elif "json" in content_type:
+        raw_body = await request.body()
+        try:
+            body = await request.json()
+            if isinstance(body, dict) and "content" in body:
+                filename = body.get("filename", filename)
+                raw_text = body["content"]
+                file_bytes = raw_text.encode("utf-8") if isinstance(raw_text, str) else b""
+            else:
+                # Raw JSON array or object
+                file_bytes = raw_body
+                if not filename.endswith(".json"):
+                    filename = "sample.json"
+        except Exception:
+            file_bytes = raw_body
+    else:
+        # text/csv, application/octet-stream, etc.
+        file_bytes = await request.body()
+        if not (filename.endswith(".csv") or filename.endswith(".json")):
+            filename = "sample.csv"
+
+    if len(file_bytes) > MAX_UPLOAD_BYTES:
+        return _problem(413, "Upload exceeds 4 MB limit (UPLOAD_TOO_LARGE)", "UPLOAD_TOO_LARGE")
+
+    ok, err_msg = validate_upload(file_bytes, filename)
+    if not ok:
+        status_code = 413 if "UPLOAD_TOO_LARGE" in err_msg else 400
+        code = "UPLOAD_TOO_LARGE" if "UPLOAD_TOO_LARGE" in err_msg else "UPLOAD_REJECTED"
+        return _problem(status_code, err_msg, code)
+
+    try:
+        rows, columns, warnings = parse_upload_rows(file_bytes, filename)
+        if not columns:
+            return _problem(400, "No valid columns found in sample file", "UPLOAD_REJECTED")
+
+        table_name = filename.rsplit(".", 1)[0].lower()
+        profile_res = profile_columns(rows, columns, table_name=table_name)
+        ir = profile_to_ir(profile_res, table_name=table_name, dataset_name=f"Sample: {table_name}")
+
+        return {
+            "profile": profile_res,
+            "ir": ir.model_dump(mode="json"),
+            "warnings": warnings,
+        }
+    except Exception as err:
+        return _problem(400, f"Profiling failed: {err}", "UPLOAD_REJECTED")
 
 
 @app.post("/api/trust")

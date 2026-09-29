@@ -1,4 +1,4 @@
-"""Formula-safe CSV export.
+﻿"""Formula-safe CSV export.
 
 Prefixes cells starting with =, +, -, @, \t, \r with a single quote.
 This is on by default and cannot be disabled.
@@ -29,3 +29,6 @@ def encode_csv(rows: list[dict[str, Any]], columns: list[str]) -> str:
         writer.writerow(safe_row)
 
     return buf.getvalue()
+
+
+export_csv = encode_csv
