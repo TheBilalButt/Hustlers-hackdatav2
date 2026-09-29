@@ -30,6 +30,7 @@ from synth.llm.router import LLMRouter
 from synth.profiler.profile import profile_columns, profile_to_ir
 from synth.security.limits import check_doc_limit
 from synth.security.uploads import MAX_UPLOAD_BYTES, parse_upload_rows, validate_upload
+from synth.trust import build_report
 
 app = FastAPI(
     title="HackDataV2 Synthetic Data Platform",
@@ -210,7 +211,13 @@ async def export_bundle(request: Request) -> Any:
         raw_recipe = body.get("recipe") or body.get("dataset") or body
         dataset = Dataset.model_validate(raw_recipe)
         all_rows = _get_dataset_rows(dataset)
-        zip_bytes = create_export_bundle(dataset, all_rows)
+        trust_rep = build_report(
+            dataset=dataset,
+            generated_data=all_rows,
+            sample_data=body.get("sample"),
+            engine_version=settings.engine_version,
+        )
+        zip_bytes = create_export_bundle(dataset, all_rows, trust_report=trust_rep.model_dump())
         return Response(
             content=zip_bytes,
             media_type="application/zip",
@@ -384,9 +391,43 @@ async def documents(request: Request) -> Any:
 
 
 @app.post("/api/trust")
-async def trust(request: Request) -> dict[str, Any]:
-    """Compute the Trust Report."""
-    return _problem(501, "Not implemented", "VALIDATION_FAILED")
+async def trust(request: Request) -> Any:
+    """Compute the full Trust Report (FR-12).
+
+    Evaluates Correctness, Realism, and Safety metrics.
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        return _problem(400, "Invalid JSON body", "BAD_REQUEST")
+
+    raw_recipe = body.get("recipe")
+    if not raw_recipe:
+        return _problem(400, "Missing 'recipe' in request body", "VALIDATION_FAILED")
+
+    try:
+        dataset = Dataset.model_validate(raw_recipe)
+    except Exception as err:
+        return _problem(422, f"Invalid recipe IR: {err}", "VALIDATION_FAILED")
+
+    data = body.get("data")
+    if data is None:
+        data = _get_dataset_rows(dataset)
+
+    sample = body.get("sample")
+    holdout = body.get("holdout")
+
+    try:
+        report = build_report(
+            dataset=dataset,
+            generated_data=data,
+            sample_data=sample,
+            holdout_data=holdout,
+            engine_version=settings.engine_version,
+        )
+        return report.model_dump()
+    except Exception as err:
+        return _problem(500, f"Trust Report computation failed: {err}", "METRIC_ERROR")
 
 
 def _problem(status: int, detail: str, code: str) -> JSONResponse:
