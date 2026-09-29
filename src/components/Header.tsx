@@ -1,49 +1,63 @@
-import React from 'react';
-import { useAppStore, AppMode } from '../state/store';
+﻿import React from 'react';
+import { useAppStore, type AppMode } from '../state/store';
+import { PRESETS } from '../state/presets';
 
 export const Header: React.FC = () => {
-  const { mode, setMode } = useAppStore();
+  const { mode, setMode, selectedPreset, loadPreset, isOffline } = useAppStore();
 
   return (
-    <header className="app-header">
-      <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-        <h1 className="display-title" style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em' }}>
-          HackDataV2
-        </h1>
-        <span style={{ fontSize: 12, opacity: 0.7, borderLeft: '1px solid #334155', paddingLeft: 12 }}>
-          Synthetic Data Platform
-        </span>
+    <header className="app-header" role="banner">
+      <div className="header-brand">
+        <div className="brand-logo" aria-hidden="true">HD</div>
+        <div className="brand-text">
+          <span className="brand-title">HackData</span>
+          <span className="brand-badge">Synthetic World Platform</span>
+        </div>
       </div>
 
-      <nav style={{ display: 'flex', gap: 4, background: '#0e1726', padding: 3, borderRadius: 6 }}>
-        {(['tabular', 'relational', 'documents'] as AppMode[]).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setMode(tab)}
-            style={{
-              padding: '6px 14px',
-              borderRadius: 4,
-              border: 'none',
-              cursor: 'pointer',
-              fontWeight: 500,
-              fontSize: 13,
-              textTransform: 'capitalize',
-              backgroundColor: mode === tab ? 'var(--teal)' : 'transparent',
-              color: '#ffffff',
-            }}
-          >
-            {tab}
-          </button>
-        ))}
+      <nav className="mode-tabs" aria-label="Platform Modes">
+        {(['tabular', 'relational', 'documents'] as AppMode[]).map((m) => {
+          const isActive = mode === m;
+          return (
+            <button
+              key={m}
+              type="button"
+              className={isActive ? 'mode-tab active' : 'mode-tab'}
+              onClick={() => setMode(m)}
+              aria-selected={isActive}
+              role="tab"
+            >
+              {m === 'tabular' && <span className="tab-icon">▦</span>}
+              {m === 'relational' && <span className="tab-icon">☍</span>}
+              {m === 'documents' && <span className="tab-icon">▤</span>}
+              <span style={{ textTransform: 'capitalize' }}>{m}</span>
+            </button>
+          );
+        })}
       </nav>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <button className="btn btn-outline" style={{ color: '#fff', borderColor: '#334155', background: 'transparent' }}>
-          Recipe ▾
-        </button>
-        <button className="btn btn-primary">
-          Export ZIP
-        </button>
+      <div className="header-actions">
+        <div className="preset-selector-group">
+          <label htmlFor="preset-select" className="sr-only">Data Preset</label>
+          <span className="preset-label">Preset:</span>
+          <select
+            id="preset-select"
+            className="preset-select"
+            value={selectedPreset}
+            onChange={(e) => loadPreset(e.target.value)}
+          >
+            {Object.values(PRESETS).map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="status-pill">
+          <span className={isOffline ? 'status-dot offline' : 'status-dot online'} aria-hidden="true" />
+          <span className="status-text">{isOffline ? 'Deterministic Mode' : 'AI Engine Ready'}</span>
+        </div>
       </div>
     </header>
   );
