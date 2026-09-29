@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 from synth.config import settings
 from synth.engines.tabular import compute_dataset_hash, generate_table
 from synth.ir.models import Dataset
+from synth.llm.router import LLMRouter
 
 app = FastAPI(
     title="HackDataV2 Synthetic Data Platform",
@@ -29,6 +30,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+router = LLMRouter()
+
 
 @app.get("/api/health")
 async def health() -> dict[str, Any]:
@@ -36,6 +39,7 @@ async def health() -> dict[str, Any]:
         "status": "ok",
         "engine_version": settings.engine_version,
         "offline": settings.offline_mode,
+        "providers": {k: b.state for k, b in router.breakers.items()},
     }
 
 
@@ -70,15 +74,46 @@ async def preview(request: Request) -> Any:
         return _problem(400, f"Generation error: {e}", code)
 
 
+@app.post("/api/plan")
+async def plan(request: Request) -> Any:
+    """Generate or refine an IR from a prompt or profile (FR-10, FR-16)."""
+    try:
+        body = await request.json()
+    except Exception:
+        return _problem(400, "Invalid JSON body", "BAD_REQUEST")
+
+    task = body.get("task", "nl_to_ir") if isinstance(body, dict) else "nl_to_ir"
+    try:
+        res = await router.call(task, body if isinstance(body, dict) else {})
+        return {
+            "ir": res.get("output", {}),
+            "degraded": res.get("degraded", False),
+            "provider": res.get("provider", "deterministic_fallback"),
+            "model": res.get("model", "template_library"),
+        }
+    except Exception as e:
+        return _problem(500, f"Planning error: {e}", "PLAN_FAILED")
+
+
+@app.post("/api/query/parse")
+async def query_parse(request: Request) -> Any:
+    """Parse a statement query into DSL (FR-08)."""
+    try:
+        body = await request.json()
+    except Exception:
+        return _problem(400, "Invalid JSON body", "BAD_REQUEST")
+
+    text = body.get("text", "") if isinstance(body, dict) else ""
+    try:
+        res = await router.call("parse_query", {"text": text})
+        return res.get("output", {})
+    except Exception as e:
+        return _problem(400, f"Query parse error: {e}", "DSL_UNSUPPORTED")
+
+
 @app.post("/api/profile")
 async def profile(request: Request) -> dict[str, Any]:
     """Profile an uploaded CSV or JSON sample."""
-    return _problem(501, "Not implemented", "VALIDATION_FAILED")
-
-
-@app.post("/api/plan")
-async def plan(request: Request) -> dict[str, Any]:
-    """Generate or refine an IR from a prompt or profile."""
     return _problem(501, "Not implemented", "VALIDATION_FAILED")
 
 
@@ -97,12 +132,6 @@ async def trust(request: Request) -> dict[str, Any]:
 @app.post("/api/documents")
 async def documents(request: Request) -> dict[str, Any]:
     """Generate invoice or statement PDFs."""
-    return _problem(501, "Not implemented", "VALIDATION_FAILED")
-
-
-@app.post("/api/query/parse")
-async def query_parse(request: Request) -> dict[str, Any]:
-    """Parse a statement query into DSL."""
     return _problem(501, "Not implemented", "VALIDATION_FAILED")
 
 
