@@ -5,11 +5,15 @@ Reference: TRD §10.
 """
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from synth.config import settings
+from synth.engines.tabular import compute_dataset_hash, generate_table
+from synth.ir.models import Dataset
 
 app = FastAPI(
     title="HackDataV2 Synthetic Data Platform",
@@ -20,14 +24,14 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # tighten for production
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
 @app.get("/api/health")
-async def health() -> dict:
+async def health() -> dict[str, Any]:
     return {
         "status": "ok",
         "engine_version": settings.engine_version,
@@ -35,59 +39,76 @@ async def health() -> dict:
     }
 
 
+@app.post("/api/preview")
+async def preview(request: Request) -> Any:
+    """Generate a preview (up to limit rows) for tables in the dataset."""
+    try:
+        body = await request.json()
+    except Exception:
+        return _problem(400, "Invalid JSON body", "BAD_REQUEST")
+
+    try:
+        raw_ds = body.get("dataset", body) if isinstance(body, dict) else body
+        limit = body.get("limit", 50) if isinstance(body, dict) and "limit" in body else 50
+        dataset = Dataset.model_validate(raw_ds)
+    except Exception as e:
+        return _problem(422, f"Validation error: {e}", "VALIDATION_FAILED")
+
+    try:
+        rows_per_table: dict[str, list[dict[str, Any]]] = {}
+        for table in dataset.tables:
+            rows_per_table[table.name] = generate_table(dataset, table.name, max_rows=limit)
+        dataset_hash = compute_dataset_hash(dataset, rows_per_table)
+        return {
+            "rows": rows_per_table,
+            "hash": dataset_hash,
+            "seed": dataset.seed,
+        }
+    except ValueError as e:
+        valid_codes = ("LIMIT_ROWS", "LIMIT_FANOUT", "LIMIT_SCHEMA")
+        code = str(e) if str(e) in valid_codes else "GENERATION_FAILED"
+        return _problem(400, f"Generation error: {e}", code)
+
+
 @app.post("/api/profile")
-async def profile(request: Request) -> dict:
+async def profile(request: Request) -> dict[str, Any]:
     """Profile an uploaded CSV or JSON sample."""
-    # TODO: implement (FR-09)
     return _problem(501, "Not implemented", "VALIDATION_FAILED")
 
 
 @app.post("/api/plan")
-async def plan(request: Request) -> dict:
+async def plan(request: Request) -> dict[str, Any]:
     """Generate or refine an IR from a prompt or profile."""
-    # TODO: implement (FR-10)
-    return _problem(501, "Not implemented", "VALIDATION_FAILED")
-
-
-@app.post("/api/preview")
-async def preview(request: Request) -> dict:
-    """Generate a 50-row preview."""
-    # TODO: implement (FR-18)
     return _problem(501, "Not implemented", "VALIDATION_FAILED")
 
 
 @app.post("/api/generate")
-async def generate(request: Request) -> dict:
+async def generate(request: Request) -> dict[str, Any]:
     """Generate a block of rows for a table."""
-    # TODO: implement (FR-01, FR-03)
     return _problem(501, "Not implemented", "VALIDATION_FAILED")
 
 
 @app.post("/api/trust")
-async def trust(request: Request) -> dict:
+async def trust(request: Request) -> dict[str, Any]:
     """Compute the Trust Report."""
-    # TODO: implement (FR-12)
     return _problem(501, "Not implemented", "VALIDATION_FAILED")
 
 
 @app.post("/api/documents")
-async def documents(request: Request) -> dict:
+async def documents(request: Request) -> dict[str, Any]:
     """Generate invoice or statement PDFs."""
-    # TODO: implement (FR-06, FR-07)
     return _problem(501, "Not implemented", "VALIDATION_FAILED")
 
 
 @app.post("/api/query/parse")
-async def query_parse(request: Request) -> dict:
+async def query_parse(request: Request) -> dict[str, Any]:
     """Parse a statement query into DSL."""
-    # TODO: implement (FR-08)
     return _problem(501, "Not implemented", "VALIDATION_FAILED")
 
 
 @app.post("/api/export/sqlite")
-async def export_sqlite(request: Request) -> dict:
+async def export_sqlite(request: Request) -> dict[str, Any]:
     """Export dataset as SQLite."""
-    # TODO: implement (FR-13)
     return _problem(501, "Not implemented", "VALIDATION_FAILED")
 
 
