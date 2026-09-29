@@ -1,2 +1,0 @@
-Frontend will be scaffolded with Vite + React + TypeScript.
-Run: pnpm create vite@latest ./ --template react-ts
