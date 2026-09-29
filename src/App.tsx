@@ -7,9 +7,13 @@ import { TabularView } from './views/TabularView';
 import { RelationalView } from './views/RelationalView';
 import { DocumentsView } from './views/DocumentsView';
 import { fetchHealth } from './api/client';
+import { useLivePreview } from './hooks/useLivePreview';
 
 export const App: React.FC = () => {
   const { mode, isOffline, setIsOffline } = useAppStore();
+
+  // Wire live debounced preview generation (FR-18)
+  useLivePreview();
 
   useEffect(() => {
     fetchHealth()
@@ -27,8 +31,8 @@ export const App: React.FC = () => {
       <ProofBar />
 
       {isOffline && (
-        <div className="degraded-banner">
-          AI drafting is offline. Built-in templates, rules, and generators are active; all core generation and export features work.
+        <div className="degraded-banner" role="status">
+          AI drafting is offline. Built-in templates, rules, and generators are active; all core generation and export features work deterministically.
         </div>
       )}
 

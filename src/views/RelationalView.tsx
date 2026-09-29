@@ -1,82 +1,43 @@
-import React from 'react';
+﻿import React from 'react';
 import { useAppStore } from '../state/store';
 
 export const RelationalView: React.FC = () => {
   const { dataset } = useAppStore();
+  const relationships = dataset.relationships || [];
 
   return (
-    <>
-      <aside className="side-panel">
-        <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Relationships</h3>
-        {dataset.relationships.map((r) => (
-          <div key={r.name} className="card">
-            <div style={{ fontWeight: 500, fontSize: 13, marginBottom: 4 }}>{r.name}</div>
-            <div style={{ fontSize: 12, color: 'var(--slate)' }}>
-              {r.parent_table} ({r.parent_keys.join(', ')}) → {r.child_table} ({r.child_keys.join(', ')})
+    <div style={{ display: 'flex', flex: 1, padding: 20, gap: 20 }}>
+      <aside className="side-panel" style={{ width: 340 }}>
+        <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Foreign Key Relationships</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {relationships.map((r, idx) => (
+            <div key={`${r.parent}_${r.child}_${idx}`} className="card" style={{ padding: 12 }}>
+              <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>
+                {r.parent} → {r.child}
+              </div>
+              <div className="mono" style={{ fontSize: 11, color: 'var(--slate)' }}>
+                {r.parent}.{r.parent_key} = {r.child}.{r.child_key}
+              </div>
+              <div style={{ marginTop: 6, fontSize: 11, color: 'var(--teal)' }}>
+                Kind: {r.kind} (dist: {r.cardinality.dist})
+              </div>
             </div>
-            <div style={{ marginTop: 6 }}>
-              <span className="verdict-tag na" style={{ fontSize: 11 }}>
-                Cardinality: {r.cardinality}
-              </span>
-            </div>
-          </div>
-        ))}
-
-        <h3 style={{ fontSize: 14, fontWeight: 600, marginTop: 20, marginBottom: 12 }}>Invariants</h3>
-        <p style={{ fontSize: 12, color: 'var(--slate)' }}>
-          orders.total = sum(order_items.qty × unit_price) + tax
-        </p>
+          ))}
+          {relationships.length === 0 && (
+            <div style={{ fontSize: 12, color: 'var(--slate)' }}>No relationships configured.</div>
+          )}
+        </div>
       </aside>
 
-      <main className="preview-canvas" style={{ display: 'flex', flexDirection: 'column' }}>
-        <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Entity-Relationship Diagram</h2>
-        <div style={{
-          flex: 1,
-          background: '#ffffff',
-          border: '1px solid var(--line)',
-          borderRadius: 8,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'column',
-          gap: 16,
-          padding: 40
-        }}>
-          <div style={{ display: 'flex', gap: 60, alignItems: 'center' }}>
-            <div className="card" style={{ width: 220, border: '2px solid var(--ink)', padding: 0 }}>
-              <div style={{ background: 'var(--ink)', color: '#fff', padding: '8px 12px', fontWeight: 600 }}>
-                customers
-              </div>
-              <div style={{ padding: 10, fontSize: 12 }}>
-                <div style={{ fontWeight: 600 }}>PK customer_id</div>
-                <div>name</div>
-                <div>email</div>
-                <div>phone</div>
-              </div>
-            </div>
-
-            <div style={{ color: 'var(--teal)', fontWeight: 600, fontSize: 18 }}>
-              1 ─── 0..N ───▶
-            </div>
-
-            <div className="card" style={{ width: 220, border: '2px solid var(--ink)', padding: 0 }}>
-              <div style={{ background: 'var(--ink)', color: '#fff', padding: '8px 12px', fontWeight: 600 }}>
-                orders
-              </div>
-              <div style={{ padding: 10, fontSize: 12 }}>
-                <div style={{ fontWeight: 600 }}>PK order_id</div>
-                <div style={{ color: 'var(--teal)' }}>FK customer_id</div>
-                <div>total_amount</div>
-                <div>created_at</div>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ fontSize: 12, color: 'var(--slate)', marginTop: 20 }}>
-            Zero orphan foreign keys guaranteed by construction (topological seed DAG).
-          </div>
+      <main className="preview-canvas" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', color: 'var(--slate)' }}>
+          <div style={{ fontSize: 32, marginBottom: 12 }}>☍</div>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink)' }}>Interactive ER Diagram</h2>
+          <p style={{ fontSize: 13, maxWidth: 400, marginTop: 4 }}>
+            Visual topological DAG with crow&apos;s-foot cardinalities and zero-orphan guarantee (M2).
+          </p>
         </div>
       </main>
-    </>
+    </div>
   );
 };
