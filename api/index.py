@@ -7,13 +7,16 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from synth.config import settings
 from synth.engines.relational import generate_relational
 from synth.engines.tabular import compute_dataset_hash, generate_table
+from synth.export.bundle import create_export_bundle
+from synth.export.sql import generate_dataset_sql
+from synth.export.sqlite import export_sqlite_bytes
 from synth.ir.models import Dataset
 from synth.llm.router import LLMRouter
 
@@ -32,6 +35,12 @@ app.add_middleware(
 )
 
 router = LLMRouter()
+
+
+def _get_dataset_rows(dataset: Dataset) -> dict[str, list[dict[str, Any]]]:
+    if dataset.relationships or dataset.invariants:
+        return generate_relational(dataset)
+    return {t.name: generate_table(dataset, t.name) for t in dataset.tables}
 
 
 @app.get("/api/health")
@@ -94,11 +103,7 @@ async def generate(request: Request) -> Any:
         return _problem(422, f"Validation error: {e}", "VALIDATION_FAILED")
 
     try:
-        if dataset.relationships or dataset.invariants:
-            rows = generate_relational(dataset)
-        else:
-            rows = {t.name: generate_table(dataset, t.name) for t in dataset.tables}
-
+        rows = _get_dataset_rows(dataset)
         dataset_hash = compute_dataset_hash(dataset, rows)
         return {
             "rows": rows,
@@ -109,6 +114,66 @@ async def generate(request: Request) -> Any:
         valid_codes = ("LIMIT_ROWS", "LIMIT_FANOUT", "LIMIT_SCHEMA")
         code = str(e) if str(e) in valid_codes else "GENERATION_FAILED"
         return _problem(400, f"Generation error: {e}", code)
+
+
+@app.post("/api/export/sql")
+async def export_sql(request: Request) -> Any:
+    """Export complete SQL DDL and INSERT script (FR-13)."""
+    try:
+        body = await request.json()
+        raw_ds = body.get("dataset", body)
+        dataset = Dataset.model_validate(raw_ds)
+    except Exception as e:
+        return _problem(422, f"Validation error: {e}", "VALIDATION_FAILED")
+
+    rows = _get_dataset_rows(dataset)
+    sql_text = generate_dataset_sql(dataset, rows)
+    clean_name = dataset.name.replace(" ", "_")
+    return Response(
+        content=sql_text,
+        media_type="application/sql",
+        headers={"Content-Disposition": f'attachment; filename="{clean_name}.sql"'},
+    )
+
+
+@app.post("/api/export/sqlite")
+async def export_sqlite(request: Request) -> Any:
+    """Export binary SQLite database file (FR-13)."""
+    try:
+        body = await request.json()
+        raw_ds = body.get("dataset", body)
+        dataset = Dataset.model_validate(raw_ds)
+    except Exception as e:
+        return _problem(422, f"Validation error: {e}", "VALIDATION_FAILED")
+
+    rows = _get_dataset_rows(dataset)
+    db_bytes = export_sqlite_bytes(dataset, rows)
+    clean_name = dataset.name.replace(" ", "_")
+    return Response(
+        content=db_bytes,
+        media_type="application/vnd.sqlite3",
+        headers={"Content-Disposition": f'attachment; filename="{clean_name}.sqlite"'},
+    )
+
+
+@app.post("/api/export/bundle")
+async def export_bundle(request: Request) -> Any:
+    """Export complete ZIP archive bundle with all formats and manifests (FR-13)."""
+    try:
+        body = await request.json()
+        raw_ds = body.get("dataset", body)
+        dataset = Dataset.model_validate(raw_ds)
+    except Exception as e:
+        return _problem(422, f"Validation error: {e}", "VALIDATION_FAILED")
+
+    rows = _get_dataset_rows(dataset)
+    zip_bytes = create_export_bundle(dataset, rows)
+    clean_name = dataset.name.replace(" ", "_")
+    return Response(
+        content=zip_bytes,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{clean_name}_bundle.zip"'},
+    )
 
 
 @app.post("/api/plan")
@@ -163,12 +228,6 @@ async def trust(request: Request) -> dict[str, Any]:
 @app.post("/api/documents")
 async def documents(request: Request) -> dict[str, Any]:
     """Generate invoice or statement PDFs."""
-    return _problem(501, "Not implemented", "VALIDATION_FAILED")
-
-
-@app.post("/api/export/sqlite")
-async def export_sqlite(request: Request) -> dict[str, Any]:
-    """Export dataset as SQLite."""
     return _problem(501, "Not implemented", "VALIDATION_FAILED")
 
 

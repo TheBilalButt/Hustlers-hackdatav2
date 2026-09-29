@@ -19,7 +19,7 @@ Legend: ☐ Not started · ◐ In progress · ☑ Done · ✂ Cut
 | FR-10 | Prompt-to-dataset | P3 | MVP | ☐ | T-10a–b |
 | FR-11 | Edge cases and chaos manifest | P3 | MVP+ | ☐ | T-11a–b |
 | FR-12 | Trust Report | P3 | MVP | ☐ | T-12a–c |
-| FR-13 | Exports | P2 | MVP | ☐ | T-13a–c |
+| FR-13 | Exports | P2 | MVP | ☑ | T-13a–c |
 | FR-14 | Recipes and reproducibility | P1 | MVP | ☐ | T-14a–c |
 | FR-15 | Ground truth and degraded scans | P3 | MVP+ | ☐ | T-15a–b |
 | FR-16 | Offline / deterministic mode | P3 | MVP | ☐ | T-16a |
@@ -53,3 +53,4 @@ Format: `date/hour | who | IDs | change | tests | next | blockers`
 - 2026-09-29 | Team | M0, FR-01, FR-16 | Scaffolded platform, tabular generation engine, and multi-provider LLM router with fallback | T-01a, T-01b, T-01d, T-10b | M1 shell | none
 - 2026-09-29 | Team | FR-18 | App shell, mode tabs, interactive column config panel with Zod, live 300ms debounced preview grid, ProofBar | T-18a, T-18b | M2 relational | none
 - 2026-09-29 | Team | FR-03, FR-04 | Topological relational generator with zero orphans, N:N deduplication, self-referencing FK, cross-table invariants (sum_children, temporal_order) | T-03a–e, T-04a–c | M2 export | none
+- 2026-09-29 | Team | FR-13 | Formula-safe CSV, JSONL, PostgreSQL/SQLite DDL and INSERT exporter, SQLite binary DB, and full ZIP bundle | T-13a–c | M2 profiler | none
