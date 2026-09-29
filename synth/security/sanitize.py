@@ -4,6 +4,7 @@ Untrusted text is truncated, datamarked (whitespace replaced with ^),
 and wrapped in <<UNTRUSTED>> delimiters.
 Reference: TRD §9.3.
 """
+
 from __future__ import annotations
 
 

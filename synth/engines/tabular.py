@@ -3,6 +3,7 @@
 Generates rows block-by-block using seeded streams.
 Reference: FR-01, TRD §5.2, §5.3, §5.4.
 """
+
 from __future__ import annotations
 
 import hashlib

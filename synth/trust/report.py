@@ -5,6 +5,7 @@ Verdicts: Pass / Warn / Fail / N-A.
 A card's verdict is the worst of its metrics, ignoring N-A.
 Reference: TRD §7, FR-12.
 """
+
 from __future__ import annotations
 
 from typing import Any, Literal

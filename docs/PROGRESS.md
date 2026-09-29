@@ -7,10 +7,10 @@ Legend: ☐ Not started · ◐ In progress · ☑ Done · ✂ Cut
 
 | FR | Title | Owner | Priority | Status | Tests |
 |---|---|---|---|---|---|
-| FR-01 | Tabular generation | P2 | MVP | ☐ | T-01a–d |
+| FR-01 | Tabular generation | P2 | MVP | ☑ | T-01a–d |
 | FR-02 | Column privacy controls | P2 | MVP+ | ☐ | T-02a–c |
-| FR-03 | Relational generation | P2 | MVP | ☐ | T-03a–e |
-| FR-04 | Cross-table invariants | P2 | MVP | ☐ | T-04a–c |
+| FR-03 | Relational generation | P2 | MVP | ☑ | T-03a–e |
+| FR-04 | Cross-table invariants | P2 | MVP | ☑ | T-04a–c |
 | FR-05 | One synthetic world | P2 | MVP | ☐ | T-05a–b |
 | FR-06 | Invoices | P2 | MVP | ☐ | T-06a–d |
 | FR-07 | Bank statements | P2 | MVP | ☐ | T-07a–c |
@@ -52,3 +52,4 @@ Format: `date/hour | who | IDs | change | tests | next | blockers`
 - 2026-09-29 | Claude | docs | Added Git and GitHub workflow to ROADMAP (repo setup and structure, branch naming, commit format, module completion checklist, commit map, tags); linked it from AGENTS.md workflow and definition of done | — | M0 | none
 - 2026-09-29 | Team | M0, FR-01, FR-16 | Scaffolded platform, tabular generation engine, and multi-provider LLM router with fallback | T-01a, T-01b, T-01d, T-10b | M1 shell | none
 - 2026-09-29 | Team | FR-18 | App shell, mode tabs, interactive column config panel with Zod, live 300ms debounced preview grid, ProofBar | T-18a, T-18b | M2 relational | none
+- 2026-09-29 | Team | FR-03, FR-04 | Topological relational generator with zero orphans, N:N deduplication, self-referencing FK, cross-table invariants (sum_children, temporal_order) | T-03a–e, T-04a–c | M2 export | none

@@ -4,6 +4,7 @@ Pools are built once per (locale, provider, seed) with 5000 values.
 Rows index into pools with NumPy integers for determinism.
 Safe identifiers only (TRD §8.3): RFC 2606/6761 domains, reserved phone ranges.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -60,11 +61,11 @@ def _generate_pool_values(fake: Faker, provider: str, size: int) -> list[Any]:
         for i in range(size):
             adj = adjectives[i % len(adjectives)]
             noun = nouns[(i // len(adjectives)) % len(nouns)]
-            values.append(f"{adj} {noun} {i+1}")
+            values.append(f"{adj} {noun} {i + 1}")
         return values
     else:
         # Fallback to general word or text
-        return [f"item_{i+1}" for i in range(size)]
+        return [f"item_{i + 1}" for i in range(size)]
 
 
 def build_pool(locale: str, provider: str, seed: int, size: int = 5000) -> list[Any]:

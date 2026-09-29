@@ -1,4 +1,5 @@
 """Export the IR as JSON Schema for TS type generation."""
+
 import json
 from pathlib import Path
 

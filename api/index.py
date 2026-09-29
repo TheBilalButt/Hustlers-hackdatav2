@@ -1,7 +1,7 @@
-"""FastAPI application — Vercel serverless entry point.
+﻿"""FastAPI application — Vercel serverless entry point.
 
 All routes under /api. Errors use RFC 9457 problem+json.
-Reference: TRD §10.
+Reference: TRD § 10.
 """
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from synth.config import settings
+from synth.engines.relational import generate_relational
 from synth.engines.tabular import compute_dataset_hash, generate_table
 from synth.ir.models import Dataset
 from synth.llm.router import LLMRouter
@@ -45,7 +46,7 @@ async def health() -> dict[str, Any]:
 
 @app.post("/api/preview")
 async def preview(request: Request) -> Any:
-    """Generate a preview (up to limit rows) for tables in the dataset."""
+    """Generate a preview (up to limit rows) for tables in the dataset (FR-18, FR-03)."""
     try:
         body = await request.json()
     except Exception:
@@ -59,12 +60,48 @@ async def preview(request: Request) -> Any:
         return _problem(422, f"Validation error: {e}", "VALIDATION_FAILED")
 
     try:
-        rows_per_table: dict[str, list[dict[str, Any]]] = {}
-        for table in dataset.tables:
-            rows_per_table[table.name] = generate_table(dataset, table.name, max_rows=limit)
+        if dataset.relationships or dataset.invariants:
+            rows_per_table = generate_relational(dataset, max_rows=limit)
+        else:
+            rows_per_table = {}
+            for table in dataset.tables:
+                rows_per_table[table.name] = generate_table(dataset, table.name, max_rows=limit)
+
         dataset_hash = compute_dataset_hash(dataset, rows_per_table)
         return {
             "rows": rows_per_table,
+            "hash": dataset_hash,
+            "seed": dataset.seed,
+        }
+    except ValueError as e:
+        valid_codes = ("LIMIT_ROWS", "LIMIT_FANOUT", "LIMIT_SCHEMA")
+        code = str(e) if str(e) in valid_codes else "GENERATION_FAILED"
+        return _problem(400, f"Generation error: {e}", code)
+
+
+@app.post("/api/generate")
+async def generate(request: Request) -> Any:
+    """Generate full dataset rows for all tables (FR-01, FR-03)."""
+    try:
+        body = await request.json()
+    except Exception:
+        return _problem(400, "Invalid JSON body", "BAD_REQUEST")
+
+    try:
+        raw_ds = body.get("dataset", body) if isinstance(body, dict) else body
+        dataset = Dataset.model_validate(raw_ds)
+    except Exception as e:
+        return _problem(422, f"Validation error: {e}", "VALIDATION_FAILED")
+
+    try:
+        if dataset.relationships or dataset.invariants:
+            rows = generate_relational(dataset)
+        else:
+            rows = {t.name: generate_table(dataset, t.name) for t in dataset.tables}
+
+        dataset_hash = compute_dataset_hash(dataset, rows)
+        return {
+            "rows": rows,
             "hash": dataset_hash,
             "seed": dataset.seed,
         }
@@ -114,12 +151,6 @@ async def query_parse(request: Request) -> Any:
 @app.post("/api/profile")
 async def profile(request: Request) -> dict[str, Any]:
     """Profile an uploaded CSV or JSON sample."""
-    return _problem(501, "Not implemented", "VALIDATION_FAILED")
-
-
-@app.post("/api/generate")
-async def generate(request: Request) -> dict[str, Any]:
-    """Generate a block of rows for a table."""
     return _problem(501, "Not implemented", "VALIDATION_FAILED")
 
 

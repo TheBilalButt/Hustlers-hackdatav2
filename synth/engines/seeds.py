@@ -7,6 +7,7 @@ Stream IDs (TRD §5.2):
   0 = values, 1 = nulls, 2 = outliers, 3 = child counts,
   4 = chaos, 5 = privacy redraws, 6 = documents, 7 = pool selection.
 """
+
 from __future__ import annotations
 
 import numpy as np

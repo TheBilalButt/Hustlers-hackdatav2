@@ -3,6 +3,7 @@
 Identifiers are validated against the safe pattern and reserved word list.
 This is the only path for generating SQL. Reference: FR-13.
 """
+
 from __future__ import annotations
 
 from typing import Any

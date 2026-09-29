@@ -5,6 +5,7 @@ cannot sneak in unexpected fields.
 
 Reference: TRD section 4.
 """
+
 from __future__ import annotations
 
 from typing import Annotated, Literal
@@ -20,12 +21,37 @@ Identifier = Annotated[
 
 # ── Semantic types ──────────────────────────────────────
 SemanticType = Literal[
-    "id", "person_name", "first_name", "last_name", "email", "phone",
-    "street_address", "city", "region", "postal_code", "country",
-    "company", "job_title", "date", "datetime", "money", "quantity",
-    "integer", "float", "percent", "category", "boolean",
-    "text_short", "text_long", "sku", "product_name", "merchant",
-    "mcc", "iban_fake", "card_fake", "url_fake",
+    "id",
+    "person_name",
+    "first_name",
+    "last_name",
+    "email",
+    "phone",
+    "street_address",
+    "city",
+    "region",
+    "postal_code",
+    "country",
+    "company",
+    "job_title",
+    "date",
+    "datetime",
+    "money",
+    "quantity",
+    "integer",
+    "float",
+    "percent",
+    "category",
+    "boolean",
+    "text_short",
+    "text_long",
+    "sku",
+    "product_name",
+    "merchant",
+    "mcc",
+    "iban_fake",
+    "card_fake",
+    "url_fake",
 ]
 
 
@@ -36,11 +62,13 @@ class FakerGenerator(BaseModel):
     provider: str
     locale: str | None = None
 
+
 class CategoricalGenerator(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     kind: Literal["categorical"] = "categorical"
     values: list[str]
     weights: list[float] | None = None
+
 
 class NumericGenerator(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -50,6 +78,7 @@ class NumericGenerator(BaseModel):
     min_val: float | None = None
     max_val: float | None = None
 
+
 class SequenceGenerator(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     kind: Literal["sequence"] = "sequence"
@@ -57,16 +86,19 @@ class SequenceGenerator(BaseModel):
     step: int = 1
     prefix: str = ""
 
+
 class DateRangeGenerator(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     kind: Literal["date_range"] = "date_range"
     start: str  # ISO date string
     end: str
 
+
 class CopulaRefGenerator(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     kind: Literal["copula_ref"] = "copula_ref"
     column_index: int
+
 
 class DerivedGenerator(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -74,11 +106,13 @@ class DerivedGenerator(BaseModel):
     derivation: Literal["sum_children", "row_expr"]
     expression: str | None = None  # allow-listed expression tree, never eval
 
+
 class ForeignKeyGenerator(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     kind: Literal["foreign_key"] = "foreign_key"
     reference_table: Identifier
     reference_column: Identifier
+
 
 Generator = (
     FakerGenerator
@@ -130,6 +164,7 @@ class Cardinality(BaseModel):
     min_val: int = 0
     max_val: int = 100
 
+
 class Relationship(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     parent: Identifier
@@ -152,6 +187,7 @@ class SumChildren(BaseModel):
     child_columns: list[Identifier]
     operation: str  # e.g. "qty * unit_price"
 
+
 class TemporalOrder(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     kind: Literal["temporal_order"] = "temporal_order"
@@ -160,11 +196,13 @@ class TemporalOrder(BaseModel):
     child_table: Identifier
     child_column: Identifier
 
+
 class UniqueCombo(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     kind: Literal["unique_combo"] = "unique_combo"
     table: Identifier
     columns: list[Identifier]
+
 
 class RunningBalance(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -173,6 +211,7 @@ class RunningBalance(BaseModel):
     balance_column: Identifier
     debit_column: Identifier
     credit_column: Identifier
+
 
 Invariant = SumChildren | TemporalOrder | UniqueCombo | RunningBalance
 
@@ -217,6 +256,7 @@ class WorldConfig(BaseModel):
 # ── Top-level Dataset ───────────────────────────────────
 class Dataset(BaseModel):
     """The single IR contract. See TRD section 4."""
+
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     ir_version: Literal["1.0"] = "1.0"

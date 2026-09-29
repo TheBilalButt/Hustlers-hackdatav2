@@ -2,6 +2,7 @@
 
 All tests run with OFFLINE_MODE=1. No live LLM calls.
 """
+
 import os
 
 import pytest

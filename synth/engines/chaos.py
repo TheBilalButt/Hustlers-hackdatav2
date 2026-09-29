@@ -3,6 +3,7 @@
 Applies configured bad data to a copy of clean data using stream 4.
 The clean variant is never modified. Reference: FR-11, ADR-0014.
 """
+
 from __future__ import annotations
 
 from typing import Any

@@ -5,6 +5,7 @@ Sample mode compares synthetic vs training split.
 Schema-only mode shows spec fidelity and coverage.
 Reference: TRD §7.2.
 """
+
 from __future__ import annotations
 
 

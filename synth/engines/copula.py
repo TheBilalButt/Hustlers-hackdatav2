@@ -1,4 +1,5 @@
 """Gaussian copula for correlated numeric columns in sample mode."""
+
 from __future__ import annotations
 
 

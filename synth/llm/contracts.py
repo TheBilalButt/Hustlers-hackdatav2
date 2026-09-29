@@ -3,6 +3,7 @@
 Every model uses extra="forbid" so unexpected fields are rejected.
 Reference: TRD section 9.1.
 """
+
 from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
@@ -14,6 +15,7 @@ class ColumnLabel(BaseModel):
     semantic_type: str
     dtype: str
     generator_kind: str
+
 
 class ColumnLabels(BaseModel):
     model_config = ConfigDict(extra="forbid")

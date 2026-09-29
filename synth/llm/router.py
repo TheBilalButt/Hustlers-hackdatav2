@@ -4,6 +4,7 @@ Behaviour specified in TRD section 9.2.
 The LLM is a planner only — it has no tools and its output never
 becomes SQL, HTML, file paths, or executable code.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -45,14 +46,10 @@ class CircuitBreaker:
         self.failures = 0
         self.open_until = 0.0
 
-    def record_failure(
-        self, is_rate_limit: bool = False, retry_after: float | None = None
-    ) -> None:
+    def record_failure(self, is_rate_limit: bool = False, retry_after: float | None = None) -> None:
         self.failures += 1
         cooldown = (
-            retry_after
-            if (retry_after is not None and retry_after > 0)
-            else self.cooldown_seconds
+            retry_after if (retry_after is not None and retry_after > 0) else self.cooldown_seconds
         )
         if is_rate_limit or self.failures >= 3:
             self.state = "open"
@@ -94,9 +91,7 @@ class LLMRouter:
             self.cache[cache_key] = fallback_res
             return fallback_res
 
-        ordered_provider_names = self.task_order.get(
-            task, [p["name"] for p in self.providers]
-        )
+        ordered_provider_names = self.task_order.get(task, [p["name"] for p in self.providers])
 
         for provider_name in ordered_provider_names:
             provider = next((p for p in self.providers if p["name"] == provider_name), None)

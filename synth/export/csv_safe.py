@@ -3,6 +3,7 @@
 Prefixes cells starting with =, +, -, @, \t, \r with a single quote.
 This is on by default and cannot be disabled.
 """
+
 from __future__ import annotations
 
 import csv

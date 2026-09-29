@@ -3,6 +3,7 @@ DCR share, NNDR 5th percentile.
 
 Reference: TRD §7.3.
 """
+
 from __future__ import annotations
 
 
