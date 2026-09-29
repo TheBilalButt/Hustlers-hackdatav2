@@ -15,7 +15,7 @@ Legend: ☐ Not started · ◐ In progress · ☑ Done · ✂ Cut
 | FR-06 | Invoices | P2 | MVP | ☐ | T-06a–d |
 | FR-07 | Bank statements | P2 | MVP | ☐ | T-07a–c |
 | FR-08 | Query-style generation | P2 | MVP+ | ☐ | T-08a–c |
-| FR-09 | Schema inference from a sample | P3 | MVP | ☐ | T-09a–b |
+| FR-09 | Schema inference from a sample | P3 | MVP | ☑ | T-09a–b |
 | FR-10 | Prompt-to-dataset | P3 | MVP | ☐ | T-10a–b |
 | FR-11 | Edge cases and chaos manifest | P3 | MVP+ | ☐ | T-11a–b |
 | FR-12 | Trust Report | P3 | MVP | ☐ | T-12a–c |
@@ -55,3 +55,4 @@ Format: `date/hour | who | IDs | change | tests | next | blockers`
 - 2026-09-29 | Team | FR-03, FR-04 | Topological relational generator with zero orphans, N:N deduplication, self-referencing FK, cross-table invariants (sum_children, temporal_order) | T-03a–e, T-04a–c | M2 export | none
 - 2026-09-29 | Team | FR-13 | Formula-safe CSV, JSONL, PostgreSQL/SQLite DDL and INSERT exporter, SQLite binary DB, and full ZIP bundle | T-13a–c | M2 profiler | none
 - 2026-09-29 | Team | FR-18 | Interactive ER diagram with React Flow, crow's foot cardinalities, link editor, and bottom split preview | T-18a, T-18b | M2 profiler | none
+- 2026-09-29 | Team | FR-09 | Deterministic sample profiling (CSV/JSON upload validation, types/stats, PII detection, winsorized bounds, redacted prompt masking, profile-to-IR) | T-09a, T-09b, RT-01..RT-26 | M2 prompt-to-dataset | none

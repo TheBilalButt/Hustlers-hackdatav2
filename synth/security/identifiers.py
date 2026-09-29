@@ -1,4 +1,4 @@
-"""Safe identifier validation.
+﻿"""Safe identifier validation and sanitization.
 
 Pattern: ^[A-Za-z_][A-Za-z0-9_]{0,62}$
 Also rejects SQL reserved words (case-insensitive).
@@ -67,3 +67,16 @@ def is_safe_identifier(name: str) -> bool:
     if not IDENTIFIER_PATTERN.match(name):
         return False
     return name.lower() not in SQL_RESERVED
+
+
+def sanitize_identifier(name: str, fallback: str = "col") -> str:
+    """Convert an arbitrary string into a safe, valid SQL and IR identifier."""
+    cleaned = re.sub(r"[^A-Za-z0-9_]", "_", name.strip())
+    cleaned = re.sub(r"_+", "_", cleaned).strip("_")
+    if not cleaned:
+        cleaned = fallback
+    if cleaned[0].isdigit():
+        cleaned = f"col_{cleaned}"
+    if cleaned.lower() in SQL_RESERVED:
+        cleaned = f"{cleaned}_col"
+    return cleaned[:63]
