@@ -7,11 +7,9 @@ Reference: TRD section 4.
 """
 from __future__ import annotations
 
-from decimal import Decimal
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
-
 
 # Safe identifier pattern — also rejects SQL reserved words via a validator
 Identifier = Annotated[

@@ -24,6 +24,4 @@ def is_safe_identifier(name: str) -> bool:
     """Check if a name is a safe SQL identifier."""
     if not IDENTIFIER_PATTERN.match(name):
         return False
-    if name.lower() in SQL_RESERVED:
-        return False
-    return True
+    return name.lower() not in SQL_RESERVED

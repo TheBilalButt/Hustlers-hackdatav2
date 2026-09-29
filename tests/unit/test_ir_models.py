@@ -2,7 +2,7 @@
 import pytest
 from pydantic import ValidationError
 
-from synth.ir.models import Dataset, Table, Column, SequenceGenerator
+from synth.ir.models import Column, Dataset, SequenceGenerator, Table
 
 
 def test_valid_dataset_creates_successfully(sample_recipe):

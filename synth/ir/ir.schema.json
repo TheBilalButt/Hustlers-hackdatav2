@@ -1,0 +1,1006 @@
+{
+  "$defs": {
+    "Cardinality": {
+      "additionalProperties": false,
+      "properties": {
+        "dist": {
+          "enum": [
+            "fixed",
+            "uniform",
+            "poisson",
+            "negbin",
+            "empirical"
+          ],
+          "title": "Dist",
+          "type": "string"
+        },
+        "params": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Params",
+          "type": "object"
+        },
+        "min_val": {
+          "default": 0,
+          "title": "Min Val",
+          "type": "integer"
+        },
+        "max_val": {
+          "default": 100,
+          "title": "Max Val",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "dist"
+      ],
+      "title": "Cardinality",
+      "type": "object"
+    },
+    "CategoricalGenerator": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "categorical",
+          "default": "categorical",
+          "title": "Kind",
+          "type": "string"
+        },
+        "values": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Values",
+          "type": "array"
+        },
+        "weights": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Weights"
+        }
+      },
+      "required": [
+        "values"
+      ],
+      "title": "CategoricalGenerator",
+      "type": "object"
+    },
+    "ChaosConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": false,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "null_injection_rate": {
+          "default": 0.01,
+          "title": "Null Injection Rate",
+          "type": "number"
+        },
+        "outlier_rate": {
+          "default": 0.005,
+          "title": "Outlier Rate",
+          "type": "number"
+        },
+        "duplicate_rate": {
+          "default": 0.005,
+          "title": "Duplicate Rate",
+          "type": "number"
+        },
+        "encoding_issues": {
+          "default": false,
+          "title": "Encoding Issues",
+          "type": "boolean"
+        },
+        "boundary_dates": {
+          "default": false,
+          "title": "Boundary Dates",
+          "type": "boolean"
+        }
+      },
+      "title": "ChaosConfig",
+      "type": "object"
+    },
+    "Column": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+          "title": "Name",
+          "type": "string"
+        },
+        "semantic_type": {
+          "enum": [
+            "id",
+            "person_name",
+            "first_name",
+            "last_name",
+            "email",
+            "phone",
+            "street_address",
+            "city",
+            "region",
+            "postal_code",
+            "country",
+            "company",
+            "job_title",
+            "date",
+            "datetime",
+            "money",
+            "quantity",
+            "integer",
+            "float",
+            "percent",
+            "category",
+            "boolean",
+            "text_short",
+            "text_long",
+            "sku",
+            "product_name",
+            "merchant",
+            "mcc",
+            "iban_fake",
+            "card_fake",
+            "url_fake"
+          ],
+          "title": "Semantic Type",
+          "type": "string"
+        },
+        "dtype": {
+          "enum": [
+            "int",
+            "float",
+            "decimal",
+            "str",
+            "bool",
+            "date",
+            "datetime"
+          ],
+          "title": "Dtype",
+          "type": "string"
+        },
+        "generator": {
+          "discriminator": {
+            "mapping": {
+              "categorical": "#/$defs/CategoricalGenerator",
+              "copula_ref": "#/$defs/CopulaRefGenerator",
+              "date_range": "#/$defs/DateRangeGenerator",
+              "derived": "#/$defs/DerivedGenerator",
+              "faker": "#/$defs/FakerGenerator",
+              "foreign_key": "#/$defs/ForeignKeyGenerator",
+              "numeric": "#/$defs/NumericGenerator",
+              "sequence": "#/$defs/SequenceGenerator"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/FakerGenerator"
+            },
+            {
+              "$ref": "#/$defs/CategoricalGenerator"
+            },
+            {
+              "$ref": "#/$defs/NumericGenerator"
+            },
+            {
+              "$ref": "#/$defs/SequenceGenerator"
+            },
+            {
+              "$ref": "#/$defs/DateRangeGenerator"
+            },
+            {
+              "$ref": "#/$defs/CopulaRefGenerator"
+            },
+            {
+              "$ref": "#/$defs/DerivedGenerator"
+            },
+            {
+              "$ref": "#/$defs/ForeignKeyGenerator"
+            }
+          ],
+          "title": "Generator"
+        },
+        "nullable": {
+          "default": false,
+          "title": "Nullable",
+          "type": "boolean"
+        },
+        "null_rate": {
+          "default": 0,
+          "maximum": 0.5,
+          "minimum": 0,
+          "title": "Null Rate",
+          "type": "number"
+        },
+        "outlier_rate": {
+          "default": 0,
+          "maximum": 0.1,
+          "minimum": 0,
+          "title": "Outlier Rate",
+          "type": "number"
+        },
+        "unique": {
+          "default": false,
+          "title": "Unique",
+          "type": "boolean"
+        },
+        "pk": {
+          "default": false,
+          "title": "Pk",
+          "type": "boolean"
+        },
+        "constraints": {
+          "items": {
+            "$ref": "#/$defs/Constraint"
+          },
+          "title": "Constraints",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "semantic_type",
+        "dtype",
+        "generator"
+      ],
+      "title": "Column",
+      "type": "object"
+    },
+    "Constraint": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "min",
+            "max",
+            "regex",
+            "one_of",
+            "after_column"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "kind",
+        "value"
+      ],
+      "title": "Constraint",
+      "type": "object"
+    },
+    "CopulaRefGenerator": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "copula_ref",
+          "default": "copula_ref",
+          "title": "Kind",
+          "type": "string"
+        },
+        "column_index": {
+          "title": "Column Index",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "column_index"
+      ],
+      "title": "CopulaRefGenerator",
+      "type": "object"
+    },
+    "DateRangeGenerator": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "date_range",
+          "default": "date_range",
+          "title": "Kind",
+          "type": "string"
+        },
+        "start": {
+          "title": "Start",
+          "type": "string"
+        },
+        "end": {
+          "title": "End",
+          "type": "string"
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "title": "DateRangeGenerator",
+      "type": "object"
+    },
+    "DerivedGenerator": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "derived",
+          "default": "derived",
+          "title": "Kind",
+          "type": "string"
+        },
+        "derivation": {
+          "enum": [
+            "sum_children",
+            "row_expr"
+          ],
+          "title": "Derivation",
+          "type": "string"
+        },
+        "expression": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expression"
+        }
+      },
+      "required": [
+        "derivation"
+      ],
+      "title": "DerivedGenerator",
+      "type": "object"
+    },
+    "DocumentSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "invoice",
+            "statement"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "template_id": {
+          "default": "classic",
+          "title": "Template Id",
+          "type": "string"
+        },
+        "count": {
+          "maximum": 2000,
+          "minimum": 1,
+          "title": "Count",
+          "type": "integer"
+        },
+        "locale": {
+          "default": "en_US",
+          "enum": [
+            "en_US",
+            "en_IN",
+            "de_DE"
+          ],
+          "title": "Locale",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "count"
+      ],
+      "title": "DocumentSpec",
+      "type": "object"
+    },
+    "FakerGenerator": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "faker",
+          "default": "faker",
+          "title": "Kind",
+          "type": "string"
+        },
+        "provider": {
+          "title": "Provider",
+          "type": "string"
+        },
+        "locale": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Locale"
+        }
+      },
+      "required": [
+        "provider"
+      ],
+      "title": "FakerGenerator",
+      "type": "object"
+    },
+    "ForeignKeyGenerator": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "foreign_key",
+          "default": "foreign_key",
+          "title": "Kind",
+          "type": "string"
+        },
+        "reference_table": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+          "title": "Reference Table",
+          "type": "string"
+        },
+        "reference_column": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+          "title": "Reference Column",
+          "type": "string"
+        }
+      },
+      "required": [
+        "reference_table",
+        "reference_column"
+      ],
+      "title": "ForeignKeyGenerator",
+      "type": "object"
+    },
+    "NumericGenerator": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "numeric",
+          "default": "numeric",
+          "title": "Kind",
+          "type": "string"
+        },
+        "dist": {
+          "enum": [
+            "normal",
+            "lognormal",
+            "uniform",
+            "poisson",
+            "empirical"
+          ],
+          "title": "Dist",
+          "type": "string"
+        },
+        "params": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Params",
+          "type": "object"
+        },
+        "min_val": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min Val"
+        },
+        "max_val": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Val"
+        }
+      },
+      "required": [
+        "dist"
+      ],
+      "title": "NumericGenerator",
+      "type": "object"
+    },
+    "PrivacyRule": {
+      "additionalProperties": false,
+      "properties": {
+        "table": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+          "title": "Table",
+          "type": "string"
+        },
+        "column": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+          "title": "Column",
+          "type": "string"
+        },
+        "control": {
+          "enum": [
+            "mask",
+            "hmac_hash",
+            "drop",
+            "generalize",
+            "dp_marginals"
+          ],
+          "title": "Control",
+          "type": "string"
+        }
+      },
+      "required": [
+        "table",
+        "column",
+        "control"
+      ],
+      "title": "PrivacyRule",
+      "type": "object"
+    },
+    "Relationship": {
+      "additionalProperties": false,
+      "properties": {
+        "parent": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+          "title": "Parent",
+          "type": "string"
+        },
+        "parent_key": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+          "title": "Parent Key",
+          "type": "string"
+        },
+        "child": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+          "title": "Child",
+          "type": "string"
+        },
+        "child_key": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+          "title": "Child Key",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "one_to_one",
+            "one_to_many",
+            "many_to_many"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "cardinality": {
+          "$ref": "#/$defs/Cardinality"
+        },
+        "junction": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Junction"
+        },
+        "nullable_backfill": {
+          "default": false,
+          "title": "Nullable Backfill",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "parent",
+        "parent_key",
+        "child",
+        "child_key",
+        "kind",
+        "cardinality"
+      ],
+      "title": "Relationship",
+      "type": "object"
+    },
+    "RunningBalance": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "running_balance",
+          "default": "running_balance",
+          "title": "Kind",
+          "type": "string"
+        },
+        "table": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+          "title": "Table",
+          "type": "string"
+        },
+        "balance_column": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+          "title": "Balance Column",
+          "type": "string"
+        },
+        "debit_column": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+          "title": "Debit Column",
+          "type": "string"
+        },
+        "credit_column": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+          "title": "Credit Column",
+          "type": "string"
+        }
+      },
+      "required": [
+        "table",
+        "balance_column",
+        "debit_column",
+        "credit_column"
+      ],
+      "title": "RunningBalance",
+      "type": "object"
+    },
+    "SequenceGenerator": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "sequence",
+          "default": "sequence",
+          "title": "Kind",
+          "type": "string"
+        },
+        "start": {
+          "default": 1,
+          "title": "Start",
+          "type": "integer"
+        },
+        "step": {
+          "default": 1,
+          "title": "Step",
+          "type": "integer"
+        },
+        "prefix": {
+          "default": "",
+          "title": "Prefix",
+          "type": "string"
+        }
+      },
+      "title": "SequenceGenerator",
+      "type": "object"
+    },
+    "SumChildren": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "sum_children",
+          "default": "sum_children",
+          "title": "Kind",
+          "type": "string"
+        },
+        "parent_table": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+          "title": "Parent Table",
+          "type": "string"
+        },
+        "parent_column": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+          "title": "Parent Column",
+          "type": "string"
+        },
+        "child_table": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+          "title": "Child Table",
+          "type": "string"
+        },
+        "child_columns": {
+          "items": {
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+            "type": "string"
+          },
+          "title": "Child Columns",
+          "type": "array"
+        },
+        "operation": {
+          "title": "Operation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "parent_table",
+        "parent_column",
+        "child_table",
+        "child_columns",
+        "operation"
+      ],
+      "title": "SumChildren",
+      "type": "object"
+    },
+    "Table": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+          "title": "Name",
+          "type": "string"
+        },
+        "row_count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Row Count"
+        },
+        "columns": {
+          "items": {
+            "$ref": "#/$defs/Column"
+          },
+          "maxItems": 64,
+          "minItems": 1,
+          "title": "Columns",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "columns"
+      ],
+      "title": "Table",
+      "type": "object"
+    },
+    "TemporalOrder": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "temporal_order",
+          "default": "temporal_order",
+          "title": "Kind",
+          "type": "string"
+        },
+        "parent_table": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+          "title": "Parent Table",
+          "type": "string"
+        },
+        "parent_column": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+          "title": "Parent Column",
+          "type": "string"
+        },
+        "child_table": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+          "title": "Child Table",
+          "type": "string"
+        },
+        "child_column": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+          "title": "Child Column",
+          "type": "string"
+        }
+      },
+      "required": [
+        "parent_table",
+        "parent_column",
+        "child_table",
+        "child_column"
+      ],
+      "title": "TemporalOrder",
+      "type": "object"
+    },
+    "UniqueCombo": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "unique_combo",
+          "default": "unique_combo",
+          "title": "Kind",
+          "type": "string"
+        },
+        "table": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+          "title": "Table",
+          "type": "string"
+        },
+        "columns": {
+          "items": {
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,62}$",
+            "type": "string"
+          },
+          "title": "Columns",
+          "type": "array"
+        }
+      },
+      "required": [
+        "table",
+        "columns"
+      ],
+      "title": "UniqueCombo",
+      "type": "object"
+    },
+    "WorldConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "seller_name": {
+          "default": "Acme Trading Co.",
+          "title": "Seller Name",
+          "type": "string"
+        },
+        "seller_address": {
+          "default": "42 Innovation Drive, Techville",
+          "title": "Seller Address",
+          "type": "string"
+        },
+        "bank_name": {
+          "default": "First Synthetic Bank",
+          "title": "Bank Name",
+          "type": "string"
+        },
+        "payment_terms_days": {
+          "default": 30,
+          "maximum": 90,
+          "minimum": 0,
+          "title": "Payment Terms Days",
+          "type": "integer"
+        }
+      },
+      "title": "WorldConfig",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The single IR contract. See TRD section 4.",
+  "properties": {
+    "ir_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Ir Version",
+      "type": "string"
+    },
+    "name": {
+      "maxLength": 80,
+      "title": "Name",
+      "type": "string"
+    },
+    "mode": {
+      "enum": [
+        "schema_only",
+        "sample"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
+    "seed": {
+      "exclusiveMaximum": 9223372036854775808,
+      "minimum": 0,
+      "title": "Seed",
+      "type": "integer"
+    },
+    "locale": {
+      "enum": [
+        "en_US",
+        "en_IN",
+        "de_DE"
+      ],
+      "title": "Locale",
+      "type": "string"
+    },
+    "tables": {
+      "items": {
+        "$ref": "#/$defs/Table"
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "title": "Tables",
+      "type": "array"
+    },
+    "relationships": {
+      "items": {
+        "$ref": "#/$defs/Relationship"
+      },
+      "title": "Relationships",
+      "type": "array"
+    },
+    "invariants": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/SumChildren"
+          },
+          {
+            "$ref": "#/$defs/TemporalOrder"
+          },
+          {
+            "$ref": "#/$defs/UniqueCombo"
+          },
+          {
+            "$ref": "#/$defs/RunningBalance"
+          }
+        ]
+      },
+      "title": "Invariants",
+      "type": "array"
+    },
+    "privacy": {
+      "items": {
+        "$ref": "#/$defs/PrivacyRule"
+      },
+      "title": "Privacy",
+      "type": "array"
+    },
+    "chaos": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ChaosConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "documents": {
+      "items": {
+        "$ref": "#/$defs/DocumentSpec"
+      },
+      "title": "Documents",
+      "type": "array"
+    },
+    "world": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/WorldConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "name",
+    "mode",
+    "seed",
+    "locale",
+    "tables"
+  ],
+  "title": "Dataset",
+  "type": "object"
+}

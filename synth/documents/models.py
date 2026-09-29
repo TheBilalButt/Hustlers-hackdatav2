@@ -6,7 +6,6 @@ Reference: TRD §6.1.
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 

@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import numpy as np
 
-
 STREAM_VALUES = 0
 STREAM_NULLS = 1
 STREAM_OUTLIERS = 2
