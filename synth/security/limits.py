@@ -2,6 +2,7 @@
 
 All limits from TRD §2 are checked before any work starts.
 """
+
 from __future__ import annotations
 
 from synth.config import settings

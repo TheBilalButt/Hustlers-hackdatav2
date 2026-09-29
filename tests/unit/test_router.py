@@ -5,6 +5,7 @@ Traceability:
 - T-16a / RT-31: Full demo path works offline with degraded banner
 - Circuit breaker state machine and 429 backoff
 """
+
 import time
 
 import pytest

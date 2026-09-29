@@ -6,6 +6,7 @@ Test traceability:
 - T-01d: Row cap rejection (LIMIT_ROWS)
 - Row addressability: Pure function of (recipe, table, block_index)
 """
+
 import pytest
 
 from synth.engines.tabular import (

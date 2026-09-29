@@ -1,4 +1,5 @@
 """Tests for IR model validation."""
+
 import pytest
 from pydantic import ValidationError
 
@@ -27,11 +28,15 @@ def test_extra_fields_rejected():
 def test_identifier_rejects_sql_injection():
     """Table names with SQL injection patterns must fail validation."""
     with pytest.raises(ValidationError):
-        Table(name="orders; DROP", row_count=10, columns=[
-            Column(
-                name="id",
-                semantic_type="id",
-                dtype="int",
-                generator=SequenceGenerator(),
-            )
-        ])
+        Table(
+            name="orders; DROP",
+            row_count=10,
+            columns=[
+                Column(
+                    name="id",
+                    semantic_type="id",
+                    dtype="int",
+                    generator=SequenceGenerator(),
+                )
+            ],
+        )

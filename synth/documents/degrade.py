@@ -3,6 +3,7 @@
 Rasterizes PDFs and applies rotation, blur, JPEG compression, and noise.
 Parameters are recorded per document. Reference: TRD §6.5.
 """
+
 from __future__ import annotations
 
 

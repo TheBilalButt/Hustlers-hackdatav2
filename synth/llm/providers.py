@@ -1,4 +1,5 @@
 """Provider client and request configuration."""
+
 from __future__ import annotations
 
 import os

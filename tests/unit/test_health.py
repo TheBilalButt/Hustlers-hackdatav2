@@ -1,4 +1,5 @@
 """Tests for API endpoints (/api/health, /api/preview, /api/plan, /api/query/parse)."""
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 

@@ -1,4 +1,5 @@
 """Tests for formula-safe CSV export."""
+
 from synth.export.csv_safe import encode_csv
 
 

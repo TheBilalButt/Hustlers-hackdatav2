@@ -1,4 +1,5 @@
 """Invoice generation from relational entities."""
+
 from __future__ import annotations
 
 

@@ -2,6 +2,7 @@
 
 Reference: FR-16, TRD §9.1, RT-31.
 """
+
 from __future__ import annotations
 
 import re

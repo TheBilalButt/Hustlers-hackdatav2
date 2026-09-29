@@ -3,6 +3,7 @@
 All money fields use Decimal with locale-specific rounding.
 Reference: TRD §6.1.
 """
+
 from __future__ import annotations
 
 from decimal import Decimal

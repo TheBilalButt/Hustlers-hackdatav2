@@ -1,4 +1,5 @@
 """Tests for safe identifier validation."""
+
 from synth.security.identifiers import is_safe_identifier
 
 
