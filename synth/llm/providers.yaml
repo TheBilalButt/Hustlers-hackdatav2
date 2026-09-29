@@ -1,0 +1,56 @@
+# LLM provider configuration
+# Limits from Sept 2026 research — re-verify on day of event
+providers:
+  - name: groq
+    base_url: https://api.groq.com/openai/v1
+    model: llama-3.3-70b-versatile
+    env_key: GROQ_API_KEY
+    rpm: 30
+    rpd: 14400
+    tokens_per_minute: 6000
+    supports_json_schema: true
+
+  - name: gemini
+    base_url: https://generativelanguage.googleapis.com/v1beta/openai
+    model: gemini-2.0-flash
+    env_key: GEMINI_API_KEY
+    rpm: 15
+    rpd: 1500
+    tokens_per_minute: 1000000
+    supports_json_schema: true
+
+  - name: cloudflare
+    base_url: https://api.cloudflare.com/client/v4/accounts/{cf_account_id}/ai/v1
+    model: "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+    env_key: CF_API_TOKEN
+    rpm: 300
+    rpd: 50000
+    tokens_per_minute: 0
+    supports_json_schema: false
+
+  - name: openrouter
+    base_url: https://openrouter.ai/api/v1
+    model: meta-llama/llama-3.3-70b-instruct:free
+    env_key: OPENROUTER_API_KEY
+    rpm: 10
+    rpd: 50
+    tokens_per_minute: 0
+    supports_json_schema: false
+
+  - name: mistral
+    base_url: https://api.mistral.ai/v1
+    model: mistral-small-latest
+    env_key: MISTRAL_API_KEY
+    rpm: 4
+    rpd: 500
+    tokens_per_minute: 500000
+    supports_json_schema: true
+
+# Per-task provider order (first that works wins)
+task_order:
+  nl_to_ir: [groq, gemini, cloudflare, openrouter, mistral]
+  label_columns: [gemini, groq, mistral, cloudflare, openrouter]
+  parse_rules: [groq, gemini, mistral]
+  parse_query: [groq, gemini, mistral]
+  text_pools: [gemini, groq, cloudflare]
+  edge_cases: [groq, gemini]

@@ -1,0 +1,15 @@
+locale: en_IN
+currency: INR
+currency_symbol: "₹"
+date_format: "%d %b %Y"
+number_grouping: "lakh"
+decimal_separator: "."
+rounding_mode: ROUND_HALF_UP
+tax:
+  gst:
+    cgst_rate: 0.09
+    sgst_rate: 0.09
+    igst_rate: 0.18
+  label: "GST (demo default)"
+phone_reserved: "+91-00000"
+email_domains: ["example.in", "example.com"]

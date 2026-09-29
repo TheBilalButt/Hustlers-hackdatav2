@@ -1,0 +1,13 @@
+locale: de_DE
+currency: EUR
+currency_symbol: "€"
+date_format: "%d.%m.%Y"
+number_grouping: "."
+decimal_separator: ","
+rounding_mode: ROUND_HALF_UP
+tax:
+  name: "MwSt"
+  rate: 0.19
+  label: "19% VAT (demo default)"
+phone_reserved: "+49-1520000"
+email_domains: ["example.de", "example.com"]

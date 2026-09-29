@@ -1,0 +1,13 @@
+locale: en_US
+currency: USD
+currency_symbol: "$"
+date_format: "%b %d, %Y"
+number_grouping: ","
+decimal_separator: "."
+rounding_mode: ROUND_HALF_UP
+tax:
+  name: "Sales Tax"
+  rate: 0.08
+  label: "State sales tax (demo default)"
+phone_reserved: "555-01"
+email_domains: ["example.com", "example.org"]
