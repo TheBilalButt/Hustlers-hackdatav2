@@ -4,10 +4,20 @@ import 'reactflow/dist/style.css';
 import { useAppStore } from '../state/store';
 import type { Relationship } from '../types/ir';
 
-// Custom Table Node for ReactFlow
-const TableNode: React.FC<{ data: { label: string; columns: { name: string; pk?: boolean; type: string }[] } }> = ({ data }) => {
+// Custom Interactive Table Node for ReactFlow
+const TableNode: React.FC<{
+  data: {
+    label: string;
+    columns: { name: string; pk?: boolean; type: string }[];
+    isSelected: boolean;
+    isDimmed: boolean;
+    connectedKeyCols: string[];
+  };
+}> = ({ data }) => {
   return (
-    <div className="table-flow-node">
+    <div
+      className={`table-flow-node ${data.isSelected ? 'selected' : ''} ${data.isDimmed ? 'dimmed' : ''}`}
+    >
       <div className="node-header">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -17,15 +27,23 @@ const TableNode: React.FC<{ data: { label: string; columns: { name: string; pk?:
         <span className="mono font-bold" style={{ fontSize: 12 }}>{data.label}</span>
       </div>
       <div className="node-body">
-        {data.columns.map((col) => (
-          <div key={col.name} className="node-col-row">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              {col.pk && <span className="pk-badge-xs">PK</span>}
-              <span className="mono" style={{ fontSize: 11 }}>{col.name}</span>
+        {data.columns.map((col) => {
+          const isKeyHighlighted = data.connectedKeyCols.includes(col.name);
+          return (
+            <div
+              key={col.name}
+              className={`node-col-row ${isKeyHighlighted ? 'col-highlight' : ''}`}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                {col.pk && <span className="pk-badge-xs">PK</span>}
+                <span className="mono" style={{ fontSize: 11, fontWeight: isKeyHighlighted ? 700 : 400 }}>
+                  {col.name}
+                </span>
+              </div>
+              <span className="node-col-type">{col.type}</span>
             </div>
-            <span className="node-col-type">{col.type}</span>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -43,8 +61,32 @@ export const RelationalView: React.FC = () => {
   const [childCol, setChildCol] = useState('');
   const [relMin, setRelMin] = useState(1);
   const [relMax, setRelMax] = useState(5);
+  const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null);
 
   const relationships = useMemo(() => dataset.relationships || [], [dataset.relationships]);
+
+  // Determine connected tables and keys for the selected table
+  const connectedInfo = useMemo(() => {
+    const connectedTables = new Set<string>();
+    const tableKeysMap: Record<string, string[]> = {};
+
+    connectedTables.add(selectedTable);
+
+    relationships.forEach((r) => {
+      if (r.parent === selectedTable) {
+        connectedTables.add(r.child);
+        tableKeysMap[selectedTable] = [...(tableKeysMap[selectedTable] || []), r.parent_key];
+        tableKeysMap[r.child] = [...(tableKeysMap[r.child] || []), r.child_key];
+      }
+      if (r.child === selectedTable) {
+        connectedTables.add(r.parent);
+        tableKeysMap[selectedTable] = [...(tableKeysMap[selectedTable] || []), r.child_key];
+        tableKeysMap[r.parent] = [...(tableKeysMap[r.parent] || []), r.parent_key];
+      }
+    });
+
+    return { connectedTables, tableKeysMap };
+  }, [relationships, selectedTable]);
 
   const handleAddRelationship = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,33 +123,52 @@ export const RelationalView: React.FC = () => {
 
   const nodes = useMemo(() => {
     const spacing = 280;
-    return dataset.tables.map((t, idx) => ({
-      id: t.name,
-      type: 'tableNode',
-      position: { x: 50 + (idx % 3) * spacing, y: 50 + Math.floor(idx / 3) * 220 },
-      data: {
-        label: t.name,
-        columns: t.columns.map((c) => ({
-          name: c.name,
-          pk: c.pk,
-          type: c.semantic_type,
-        })),
-      },
-    }));
-  }, [dataset.tables]);
+    return dataset.tables.map((t, idx) => {
+      const isSelected = t.name === selectedTable;
+      const isConnected = connectedInfo.connectedTables.has(t.name);
+      const isDimmed = selectedTable !== '' && !isConnected;
+      const connectedKeyCols = connectedInfo.tableKeysMap[t.name] || [];
+
+      return {
+        id: t.name,
+        type: 'tableNode',
+        position: { x: 50 + (idx % 3) * spacing, y: 50 + Math.floor(idx / 3) * 220 },
+        data: {
+          label: t.name,
+          isSelected,
+          isDimmed,
+          connectedKeyCols,
+          columns: t.columns.map((c) => ({
+            name: c.name,
+            pk: c.pk,
+            type: c.semantic_type,
+          })),
+        },
+      };
+    });
+  }, [dataset.tables, selectedTable, connectedInfo]);
 
   const edges = useMemo(() => {
-    return relationships.map((r, idx) => ({
-      id: `e-${r.parent}-${r.child}-${idx}`,
-      source: r.parent,
-      target: r.child,
-      label: `${r.parent_key} -> ${r.child_key}`,
-      animated: true,
-      style: { stroke: 'var(--teal)', strokeWidth: 2 },
-      labelStyle: { fill: 'var(--ink)', fontWeight: 600, fontSize: 11, fontFamily: 'var(--font-mono)' },
-      labelBgStyle: { fill: 'var(--card-bg)', fillOpacity: 0.9 },
-    }));
-  }, [relationships]);
+    return relationships.map((r, idx) => {
+      const edgeId = `e-${r.parent}-${r.child}-${idx}`;
+      const isConnectedToSelected = r.parent === selectedTable || r.child === selectedTable;
+      const isHovered = hoveredEdgeId === edgeId;
+
+      const strokeColor = isConnectedToSelected || isHovered ? 'var(--teal)' : 'var(--line)';
+      const strokeWidth = isConnectedToSelected || isHovered ? 3 : 1.5;
+
+      return {
+        id: edgeId,
+        source: r.parent,
+        target: r.child,
+        label: `${r.parent_key} -> ${r.child_key} (1:N)`,
+        animated: isConnectedToSelected || isHovered,
+        style: { stroke: strokeColor, strokeWidth },
+        labelStyle: { fill: 'var(--ink)', fontWeight: 600, fontSize: 11, fontFamily: 'var(--font-mono)' },
+        labelBgStyle: { fill: 'var(--card-bg)', fillOpacity: 0.95 },
+      };
+    });
+  }, [relationships, selectedTable, hoveredEdgeId]);
 
   const activeTable = dataset.tables.find((t) => t.name === selectedTable) || dataset.tables[0];
   const activeRows = activeTable ? previewRows[activeTable.name] || [] : [];
@@ -233,31 +294,50 @@ export const RelationalView: React.FC = () => {
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {relationships.map((r, idx) => (
-              <div key={idx} className="column-card" style={{ padding: 10 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontWeight: 600, fontSize: 13 }}>
-                    <span className="mono" style={{ color: 'var(--ink)' }}>{r.parent}</span>
-                    <span style={{ margin: '0 4px', color: 'var(--teal)' }}>→</span>
-                    <span className="mono" style={{ color: 'var(--ink)' }}>{r.child}</span>
+            {relationships.map((r, idx) => {
+              const edgeId = `e-${r.parent}-${r.child}-${idx}`;
+              const isSelectedRel = r.parent === selectedTable || r.child === selectedTable;
+              return (
+                <div
+                  key={idx}
+                  className={`column-card ${isSelectedRel ? 'expanded' : ''}`}
+                  style={{ padding: 10, cursor: 'pointer' }}
+                  onMouseEnter={() => setHoveredEdgeId(edgeId)}
+                  onMouseLeave={() => setHoveredEdgeId(null)}
+                  onClick={() => setSelectedTable(r.parent)}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontWeight: 600, fontSize: 13 }}>
+                      <span className="mono" style={{ color: 'var(--ink)' }}>{r.parent}</span>
+                      <span style={{ margin: '0 4px', color: 'var(--teal)' }}>→</span>
+                      <span className="mono" style={{ color: 'var(--ink)' }}>{r.child}</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn-delete-chip"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveRelationship(idx);
+                      }}
+                      title="Remove link"
+                    >
+                      ✕
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    className="btn-delete-chip"
-                    onClick={() => handleRemoveRelationship(idx)}
-                    title="Remove link"
-                  >
-                    ✕
-                  </button>
+                  <div className="mono" style={{ fontSize: 11, color: 'var(--slate)', marginTop: 4 }}>
+                    {r.parent}.{r.parent_key} = {r.child}.{r.child_key}
+                  </div>
+                  <div style={{ marginTop: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 10, color: 'var(--teal)', fontWeight: 600 }}>
+                      1:N (Cardinality: {r.cardinality.min_val}..{r.cardinality.max_val})
+                    </span>
+                    <span style={{ fontSize: 9, color: 'var(--slate)', textTransform: 'uppercase' }}>
+                      {r.cardinality.dist}
+                    </span>
+                  </div>
                 </div>
-                <div className="mono" style={{ fontSize: 11, color: 'var(--slate)', marginTop: 4 }}>
-                  {r.parent}.{r.parent_key} = {r.child}.{r.child_key}
-                </div>
-                <div style={{ marginTop: 4, fontSize: 10, color: 'var(--teal)', fontWeight: 500 }}>
-                  Cardinality: {r.cardinality.min_val}..{r.cardinality.max_val} ({r.cardinality.dist})
-                </div>
-              </div>
-            ))}
+              );
+            })}
             {relationships.length === 0 && (
               <div style={{ fontSize: 12, color: 'var(--slate)', padding: '10px 0' }}>
                 No relationships defined. Click &quot;+ Link&quot; to define foreign keys.

@@ -78,6 +78,20 @@ export const ConfigPanel: React.FC = () => {
 
   return (
     <aside className="config-sidebar" aria-label="Schema Configuration">
+      {/* Primary Action Button */}
+      <div style={{ padding: '12px 14px 4px 14px' }}>
+        <button
+          type="button"
+          className="btn btn-primary"
+          style={{ width: '100%', padding: '8px 12px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+          onClick={() => useAppStore.getState().rollNewSeed()}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3" />
+          </svg>
+          <span>Generate Synthetic World</span>
+        </button>
+      </div>
       {/* Tables Selection Section */}
       <section className="config-section">
         <div className="section-header">

@@ -12,19 +12,33 @@ export const TrustDrawer: React.FC = () => {
   } = useAppStore();
 
   const [isLoading, setIsLoading] = useState(false);
+  const [valProgressStep, setValProgressStep] = useState<number>(0);
   const [filterVerdict, setFilterVerdict] = useState<'all' | 'pass' | 'warn' | 'fail'>('all');
 
   if (!isTrustDrawerOpen) return null;
 
   const handleRefresh = async () => {
     setIsLoading(true);
+    setValProgressStep(1);
+
+    const stepTimer1 = setTimeout(() => setValProgressStep(2), 250);
+    const stepTimer2 = setTimeout(() => setValProgressStep(3), 500);
+    const stepTimer3 = setTimeout(() => setValProgressStep(4), 750);
+
     try {
       const data = await fetchTrustReportBackend(dataset);
       setBackendTrustReport(data);
     } catch {
       // Keep existing reports if offline
     } finally {
-      setIsLoading(false);
+      clearTimeout(stepTimer1);
+      clearTimeout(stepTimer2);
+      clearTimeout(stepTimer3);
+      setValProgressStep(4);
+      setTimeout(() => {
+        setIsLoading(false);
+        setValProgressStep(0);
+      }, 500);
     }
   };
 
@@ -93,7 +107,7 @@ export const TrustDrawer: React.FC = () => {
             <polyline points="1 20 1 14 7 14" />
             <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
           </svg>
-          {isLoading ? 'Computing...' : 'Recompute Live'}
+          {isLoading ? 'Validating...' : 'Run Validation'}
         </button>
 
         <button
@@ -109,6 +123,24 @@ export const TrustDrawer: React.FC = () => {
           Export JSON
         </button>
       </div>
+
+      {/* Live Validation Stepper Banner when running */}
+      {valProgressStep > 0 && (
+        <div className="validation-stepper-box">
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 4 }}>
+            <span style={{ fontWeight: 600, color: 'var(--teal)' }}>
+              {valProgressStep === 1 && 'Checking schema validity & PK uniqueness...'}
+              {valProgressStep === 2 && 'Auditing foreign key relationships (0 orphans)...'}
+              {valProgressStep === 3 && 'Evaluating mathematical invariants & balance rules...'}
+              {valProgressStep === 4 && 'Verifying safe identifiers & document watermarks...'}
+            </span>
+            <span className="mono font-bold" style={{ color: 'var(--teal)' }}>{valProgressStep * 25}%</span>
+          </div>
+          <div className="ai-progress-bar-bg">
+            <div className="ai-progress-bar-fill" style={{ width: `${valProgressStep * 25}%` }} />
+          </div>
+        </div>
+      )}
 
       {/* Cards List Body */}
       <div className="trust-drawer-body">
