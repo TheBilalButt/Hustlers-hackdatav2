@@ -205,7 +205,7 @@ export const PreviewGrid: React.FC = () => {
                 onClick={() => setFilterText('')}
                 title="Clear filter"
               >
-                ✕
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
               </button>
             )}
           </div>
@@ -250,7 +250,7 @@ export const PreviewGrid: React.FC = () => {
                   <span>Generating...</span>
                 </>
               ) : exportState === 'success' ? (
-                <span>✓ Exported</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg><span>Exported</span></span>
               ) : (
                 <>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 4 }}>
@@ -279,7 +279,7 @@ export const PreviewGrid: React.FC = () => {
                 </div>
                 <strong style={{ fontSize: 13, color: 'var(--ink)' }}>AI Schema & Pattern Analysis</strong>
               </div>
-              <button type="button" className="drawer-close-btn" onClick={() => setShowAnalysis(false)}>✕</button>
+              <button type="button" className="drawer-close-btn" onClick={() => setShowAnalysis(false)}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg></button>
             </div>
 
             {/* Stepper Progress Bar */}
@@ -293,7 +293,7 @@ export const PreviewGrid: React.FC = () => {
             {/* Analysis Steps List */}
             <div className="ai-steps-list">
               <div className={`ai-step-item ${analysisStep >= 1 ? 'completed' : ''}`}>
-                <span className="step-badge">{analysisStep >= 1 ? '✓' : '1'}</span>
+                <span className="step-badge">{analysisStep >= 1 ? (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>) : '1'}</span>
                 <div>
                   <div className="step-title">Schema detected</div>
                   <div className="step-desc">Identified {dataset.tables.length} tables and relational primary keys</div>
@@ -301,7 +301,7 @@ export const PreviewGrid: React.FC = () => {
               </div>
 
               <div className={`ai-step-item ${analysisStep >= 2 ? 'completed' : ''}`}>
-                <span className="step-badge">{analysisStep >= 2 ? '✓' : '2'}</span>
+                <span className="step-badge">{analysisStep >= 2 ? (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>) : '2'}</span>
                 <div>
                   <div className="step-title">Columns identified</div>
                   <div className="step-desc">Categorized semantic data types, money, and distributions</div>
@@ -309,7 +309,7 @@ export const PreviewGrid: React.FC = () => {
               </div>
 
               <div className={`ai-step-item ${analysisStep >= 3 ? 'completed' : ''}`}>
-                <span className="step-badge">{analysisStep >= 3 ? '✓' : '3'}</span>
+                <span className="step-badge">{analysisStep >= 3 ? (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>) : '3'}</span>
                 <div>
                   <div className="step-title">Relationships detected</div>
                   <div className="step-desc">Verified 0-orphan foreign key consistency across entities</div>
@@ -317,7 +317,7 @@ export const PreviewGrid: React.FC = () => {
               </div>
 
               <div className={`ai-step-item ${analysisStep >= 4 ? 'completed' : ''}`}>
-                <span className="step-badge">{analysisStep >= 4 ? '✓' : '4'}</span>
+                <span className="step-badge">{analysisStep >= 4 ? (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>) : '4'}</span>
                 <div>
                   <div className="step-title">Patterns identified</div>
                   <div className="step-desc">Synchronized arithmetic totals, dates, and account ledgers</div>
@@ -325,7 +325,7 @@ export const PreviewGrid: React.FC = () => {
               </div>
 
               <div className={`ai-step-item ${analysisStep >= 5 ? 'completed' : ''}`}>
-                <span className="step-badge">{analysisStep >= 5 ? '✓' : '5'}</span>
+                <span className="step-badge">{analysisStep >= 5 ? (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>) : '5'}</span>
                 <div>
                   <div className="step-title">Privacy rules checked</div>
                   <div className="step-desc">Applied RFC 2606 safe identifiers and mandatory watermarks</div>
@@ -336,8 +336,8 @@ export const PreviewGrid: React.FC = () => {
             <div className="ai-modal-footer">
               {analysisStep >= 5 ? (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                  <span style={{ fontSize: 11, color: 'var(--pass)', fontWeight: 600 }}>
-                    ✓ Analysis Complete • Ready for Production
+                  <span style={{ fontSize: 11, color: 'var(--pass)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg> <span>Analysis Complete • Ready for Production</span>
                   </span>
                   <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowAnalysis(false)}>
                     Done
@@ -386,7 +386,7 @@ export const PreviewGrid: React.FC = () => {
                         {c.pk && <span className="pk-indicator" title="Primary Key">PK</span>}
                         <span className="mono font-bold">{c.name}</span>
                         <span className="sort-arrow">
-                          {isSorted ? (sortDir === 'asc' ? '▲' : '▼') : '↕'}
+                          {isSorted ? (sortDir === 'asc' ? (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="18 15 12 9 6 15" /></svg>) : (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9" /></svg>)) : (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" opacity="0.4"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg>)}
                         </span>
                       </div>
                       <div className="col-meta-row">

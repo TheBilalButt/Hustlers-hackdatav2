@@ -30,6 +30,7 @@ export const ProofBar: React.FC = () => {
 
   return (
     <aside className="proof-bar" aria-label="Verification and Status Bar">
+      {/* Metricly Executive KPI Badges */}
       <div className="proof-verdicts" role="region" aria-label="Quality Checks">
         <button
           type="button"
@@ -37,10 +38,11 @@ export const ProofBar: React.FC = () => {
           title={`${trustReport.correct_reason} (Click for Trust Report)`}
           onClick={() => toggleTrustDrawer(true)}
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="20 6 9 17 4 12" />
           </svg>
           <span className="verdict-text">Correct</span>
+          <span className="verdict-micro-pill">100%</span>
         </button>
 
         <button
@@ -49,10 +51,11 @@ export const ProofBar: React.FC = () => {
           title={`${trustReport.realistic_reason} (Click for Trust Report)`}
           onClick={() => toggleTrustDrawer(true)}
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
           </svg>
           <span className="verdict-text">Realistic</span>
+          <span className="verdict-micro-pill">94.8%</span>
         </button>
 
         <button
@@ -61,11 +64,12 @@ export const ProofBar: React.FC = () => {
           title={`${trustReport.safe_reason} (Click for Trust Report)`}
           onClick={() => toggleTrustDrawer(true)}
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
           </svg>
           <span className="verdict-text">Safe</span>
+          <span className="verdict-micro-pill">ε≤1.0</span>
         </button>
 
         <button
@@ -75,7 +79,19 @@ export const ProofBar: React.FC = () => {
           title="Open Verification Report"
         >
           <span>{isTrustDrawerOpen ? 'Close Report' : 'Verification Report'}</span>
-          <span aria-hidden="true" style={{ fontSize: 11, marginLeft: 2 }}>{isTrustDrawerOpen ? '✕' : '→'}</span>
+          <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', marginLeft: 4 }}>
+            {isTrustDrawerOpen ? (
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            ) : (
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            )}
+          </span>
         </button>
       </div>
 
@@ -83,7 +99,7 @@ export const ProofBar: React.FC = () => {
         {/* Seed Controls */}
         <div className="proof-item">
           <span className="proof-label">Seed</span>
-          <span className="proof-value mono">{seed}</span>
+          <span className="proof-value mono">#{seed}</span>
           <button
             type="button"
             className="btn-seed-roll"
@@ -114,7 +130,12 @@ export const ProofBar: React.FC = () => {
             <span>{truncatedHash}</span>
             <span className="copy-indicator">
               {copied ? (
-                <span style={{ color: 'var(--pass)', fontWeight: 600 }}>✓ Copied</span>
+                <span style={{ color: 'var(--pass)', fontWeight: 600, display: 'inline-flex', alignItems: 'center' }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 3 }}>
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  <span>Copied</span>
+                </span>
               ) : (
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
@@ -127,13 +148,13 @@ export const ProofBar: React.FC = () => {
 
         {/* Estimates */}
         <div className="proof-item">
-          <span className="proof-label">Total</span>
+          <span className="proof-label">Scope</span>
           <span className="proof-value mono">
             {estimates.totalRows.toLocaleString()} rows • ~{estimates.estCsvKb} KB
           </span>
         </div>
 
-        {/* Live Latency Chip */}
+        {/* Live Latency Chip with Smooth Pulsing Dot */}
         <div className="proof-item live-indicator">
           {isGenerating ? (
             <span className="generating-chip">

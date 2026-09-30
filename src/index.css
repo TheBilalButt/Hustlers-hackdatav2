@@ -2380,3 +2380,137 @@ input:checked + .slider:before {
   transform: translateY(-2px) scale(1.03);
   box-shadow: 0 12px 24px rgba(13, 148, 136, 0.5);
 }
+
+
+/* Dribbble Style Navigation Micro-Badges & Clean Aesthetics */
+.app-header {
+  position: relative;
+}
+
+.app-header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2.5px;
+  background: linear-gradient(90deg, #FF6B6B 0%, #FF8E53 25%, #FFA07A 45%, #845EC2 75%, #00C9A7 100%);
+  opacity: 0.85;
+  z-index: 100;
+}
+
+.nav-pill-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--slate);
+  letter-spacing: -0.01em;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html.dark .nav-pill-badge {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--slate-light);
+}
+
+.mode-tab.active .nav-pill-badge {
+  background: var(--sand);
+  color: var(--ink);
+}
+
+html.dark .mode-tab.active .nav-pill-badge {
+  background: rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+}
+
+.nav-pill-badge.badge-ai {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.12) 0%, rgba(20, 184, 166, 0.12) 100%);
+  color: #7C3AED;
+  border: 1px solid rgba(124, 58, 237, 0.2);
+}
+
+html.dark .nav-pill-badge.badge-ai {
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.2) 0%, rgba(45, 212, 191, 0.2) 100%);
+  color: #C4B5FD;
+  border: 1px solid rgba(167, 139, 250, 0.3);
+}
+
+/* Micro pill inside verdict badge */
+.verdict-micro-pill {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.65);
+  color: inherit;
+  margin-left: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+html.dark .verdict-micro-pill {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Dribbble Fluid Motion & Micro-Interactions */
+@keyframes statusPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45);
+  }
+  50% {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
+  }
+}
+
+.status-dot.online {
+  background-color: var(--pass);
+  animation: statusPulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Card & Element Spring Hover Lift */
+.mode-tab, .btn, .template-card, .verdict-badge, .sample-file-btn, .hash-pill, .export-segment-btn {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), 
+              box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), 
+              background-color 0.15s ease, 
+              border-color 0.15s ease, 
+              color 0.15s ease !important;
+}
+
+.mode-tab:active, .btn:active, .sample-file-btn:active, .export-segment-btn:active {
+  transform: scale(0.975) !important;
+}
+
+/* Template Cards Dribbble Elevation */
+.template-card {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+
+.template-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.08), 0 4px 8px -2px rgba(0, 0, 0, 0.04);
+  border-color: var(--teal);
+}
+
+html.dark .template-card:hover {
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.5), 0 4px 8px -2px rgba(0, 0, 0, 0.3);
+  border-color: var(--teal);
+}
+
+/* Table Row Smooth Interactive Highlight */
+.data-table tbody tr {
+  transition: background-color 0.12s ease;
+}
+
+.data-table tbody tr:hover {
+  background-color: rgba(13, 148, 136, 0.04);
+}
+
+html.dark .data-table tbody tr:hover {
+  background-color: rgba(20, 184, 166, 0.06);
+}

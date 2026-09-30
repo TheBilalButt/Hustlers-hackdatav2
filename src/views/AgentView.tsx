@@ -196,23 +196,23 @@ export const AgentView: React.FC = () => {
                 </div>
                 <div className="stepper-feed">
                   <div className={`step-row ${stepIndex >= 1 ? 'done' : ''}`}>
-                    <span className="step-circle">{stepIndex > 1 ? '✓' : '1'}</span>
+                    <span className="step-circle">{stepIndex > 1 ? (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>) : '1'}</span>
                     <span className="step-text">Parsing domain entities, schema definitions, and locale attributes...</span>
                   </div>
                   <div className={`step-row ${stepIndex >= 2 ? 'done' : ''}`}>
-                    <span className="step-circle">{stepIndex > 2 ? '✓' : '2'}</span>
+                    <span className="step-circle">{stepIndex > 2 ? (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>) : '2'}</span>
                     <span className="step-text">Synthesizing relational foreign key constraints (1:N cardinalities)...</span>
                   </div>
                   <div className={`step-row ${stepIndex >= 3 ? 'done' : ''}`}>
-                    <span className="step-circle">{stepIndex > 3 ? '✓' : '3'}</span>
+                    <span className="step-circle">{stepIndex > 3 ? (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>) : '3'}</span>
                     <span className="step-text">Generating localized entities with authentic names (Pakistani & global in PKR/USD)...</span>
                   </div>
                   <div className={`step-row ${stepIndex >= 4 ? 'done' : ''}`}>
-                    <span className="step-circle">{stepIndex > 4 ? '✓' : '4'}</span>
+                    <span className="step-circle">{stepIndex > 4 ? (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>) : '4'}</span>
                     <span className="step-text">Enforcing Differential Privacy (ε ≤ 1.0) and document reconciliation...</span>
                   </div>
                   <div className={`step-row ${stepIndex >= 5 ? 'done' : ''}`}>
-                    <span className="step-circle">{stepIndex >= 5 ? '✓' : '5'}</span>
+                    <span className="step-circle">{stepIndex >= 5 ? (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>) : '5'}</span>
                     <span className="step-text" style={{ fontWeight: 600, color: 'var(--pass)' }}>Synthetic World synthesized! Directing to workspace...</span>
                   </div>
                 </div>
@@ -251,7 +251,7 @@ export const AgentView: React.FC = () => {
                 onClick={() => handleUploadSample('sample_customers.csv')}
                 disabled={isGenerating}
               >
-                📄 customers_sample.csv
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg><span>customers_sample.csv</span>
               </button>
               <button
                 type="button"
@@ -259,7 +259,7 @@ export const AgentView: React.FC = () => {
                 onClick={() => handleUploadSample('transactions_ledger.json')}
                 disabled={isGenerating}
               >
-                📄 transactions_ledger.json
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg><span>transactions_ledger.json</span>
               </button>
             </div>
           </div>
@@ -281,7 +281,13 @@ export const AgentView: React.FC = () => {
               tabIndex={0}
             >
               <div className="template-card-header">
-                <div className="template-icon-box">🛍️</div>
+                <div className="template-icon-box">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <path d="M16 10a4 4 0 0 1-8 0" />
+                </svg>
+              </div>
                 <div className="template-badge">Popular</div>
               </div>
               <h3 className="template-title">E-commerce & Retail</h3>
@@ -303,7 +309,11 @@ export const AgentView: React.FC = () => {
               tabIndex={0}
             >
               <div className="template-card-header">
-                <div className="template-icon-box">⚡</div>
+                <div className="template-icon-box">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                </svg>
+              </div>
                 <div className="template-badge">CRM</div>
               </div>
               <h3 className="template-title">B2B SaaS Platform</h3>
@@ -325,7 +335,18 @@ export const AgentView: React.FC = () => {
               tabIndex={0}
             >
               <div className="template-card-header">
-                <div className="template-icon-box">🏦</div>
+                <div className="template-icon-box">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="3" y1="21" x2="21" y2="21" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                  <polyline points="5 6 12 3 19 6" />
+                  <line x1="4" y1="10" x2="4" y2="21" />
+                  <line x1="20" y1="10" x2="20" y2="21" />
+                  <line x1="8" y1="14" x2="8" y2="17" />
+                  <line x1="12" y1="14" x2="12" y2="17" />
+                  <line x1="16" y1="14" x2="16" y2="17" />
+                </svg>
+              </div>
                 <div className="template-badge">Fintech</div>
               </div>
               <h3 className="template-title">Commercial Banking & Ledger</h3>
