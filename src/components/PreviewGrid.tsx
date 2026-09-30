@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAppStore } from '../state/store';
 
 export const PreviewGrid: React.FC = () => {
@@ -10,8 +10,18 @@ export const PreviewGrid: React.FC = () => {
     previewError,
   } = useAppStore();
 
+  const [filterText, setFilterText] = useState('');
+
   const table = dataset.tables.find((t) => t.name === selectedTable) || dataset.tables[0];
-  const rows = table ? previewRows[table.name] || [] : [];
+
+  const rows = useMemo(() => {
+    const rawRows = table ? previewRows[table.name] || [] : [];
+    if (!filterText.trim()) return rawRows;
+    const q = filterText.toLowerCase();
+    return rawRows.filter((r) =>
+      Object.values(r).some((v) => String(v ?? '').toLowerCase().includes(q))
+    );
+  }, [table, previewRows, filterText]);
 
   const handleExportCsv = () => {
     if (!table || rows.length === 0) return;
@@ -69,17 +79,43 @@ export const PreviewGrid: React.FC = () => {
             Preview: <span className="mono font-bold">{table.name}</span>
           </h1>
           <span className="preview-subheading">
-            {rows.length} preview rows · {(table.row_count || 1000).toLocaleString()} planned in dataset
+            {rows.length} rows loaded • {(table.row_count || 1000).toLocaleString()} planned in dataset
           </span>
+          {dataset.chaos?.enabled && (
+            <span style={{ fontSize: 10, fontWeight: 700, backgroundColor: 'rgba(122, 62, 177, 0.12)', color: 'var(--chaos)', border: '1px solid var(--chaos)', padding: '2px 6px', borderRadius: 4, marginLeft: 8 }}>
+              ⚡ Chaos Active
+            </span>
+          )}
         </div>
 
         <div className="preview-actions">
+          {/* Quick Filter */}
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <input
+              type="text"
+              className="input-text"
+              placeholder="Search table rows..."
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
+              style={{ fontSize: 11, padding: '4px 8px', width: 170 }}
+            />
+            {filterText && (
+              <button
+                type="button"
+                onClick={() => setFilterText('')}
+                style={{ position: 'absolute', right: 6, background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--slate)' }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
           <button
             type="button"
             className="btn btn-outline btn-sm"
             onClick={handleExportCsv}
             disabled={rows.length === 0}
-            title="Export current 50 rows as CSV"
+            title="Export current rows as CSV"
           >
             Export CSV
           </button>
@@ -88,7 +124,7 @@ export const PreviewGrid: React.FC = () => {
             className="btn btn-outline btn-sm"
             onClick={handleExportJson}
             disabled={rows.length === 0}
-            title="Export current 50 rows as JSON"
+            title="Export current rows as JSON"
           >
             Export JSON
           </button>
@@ -97,7 +133,7 @@ export const PreviewGrid: React.FC = () => {
 
       {previewError && (
         <div className="preview-error-banner" role="alert">
-          <span className="error-icon" aria-hidden="true">⚠</span>
+          <span className="error-icon" aria-hidden="true">⚠️</span>
           <div className="error-text">
             <strong>Preview notice:</strong> {previewError}
           </div>
@@ -127,29 +163,35 @@ export const PreviewGrid: React.FC = () => {
           </thead>
           <tbody>
             {rows.length > 0 ? (
-              rows.map((row, idx) => (
-                <tr key={idx} className={idx % 2 === 1 ? 'row-zebra' : ''}>
-                  <td className="cell-index mono">{idx + 1}</td>
-                  {table.columns.map((c) => {
-                    const rawVal = row[c.name];
-                    const isNull = rawVal === null || rawVal === undefined;
-                    const isNumeric = c.dtype === 'int' || c.dtype === 'float' || c.dtype === 'decimal';
+              rows.map((row, idx) => {
+                const hasChaos = !!row._hasChaos;
+                return (
+                  <tr key={idx} className={idx % 2 === 1 ? 'row-zebra' : ''} style={hasChaos ? { backgroundColor: 'rgba(122, 62, 177, 0.05)' } : undefined}>
+                    <td className="cell-index mono">
+                      {idx + 1}
+                      {hasChaos && <span title="Chaos Injected" style={{ color: 'var(--chaos)', fontSize: 9, marginLeft: 2 }}>⚡</span>}
+                    </td>
+                    {table.columns.map((c) => {
+                      const rawVal = row[c.name];
+                      const isNull = rawVal === null || rawVal === undefined;
+                      const isNumeric = c.dtype === 'int' || c.dtype === 'float' || c.dtype === 'decimal';
 
-                    return (
-                      <td
-                        key={c.name}
-                        className={`cell-data mono ${isNumeric ? 'text-right' : ''} ${isNull ? 'cell-null' : ''}`}
-                      >
-                        {isNull ? (
-                          <span className="null-badge">null</span>
-                        ) : (
-                          <span>{String(rawVal)}</span>
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))
+                      return (
+                        <td
+                          key={c.name}
+                          className={`cell-data mono ${isNumeric ? 'text-right' : ''} ${isNull ? 'cell-null' : ''}`}
+                        >
+                          {isNull ? (
+                            <span className="null-badge">null</span>
+                          ) : (
+                            <span>{String(rawVal)}</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })
             ) : isGenerating ? (
               <tr>
                 <td colSpan={table.columns.length + 1} className="table-loading-cell">
@@ -159,7 +201,7 @@ export const PreviewGrid: React.FC = () => {
             ) : (
               <tr>
                 <td colSpan={table.columns.length + 1} className="table-empty-cell">
-                  No preview rows available. Check configuration or network status.
+                  No preview rows matching query.
                 </td>
               </tr>
             )}
@@ -169,7 +211,7 @@ export const PreviewGrid: React.FC = () => {
 
       <footer className="preview-footer">
         <span className="footer-info">
-          Showing {rows.length} rows (FR-18 preview cap) · Live debounced 300ms · Deterministic SHA-256 verifiable
+          Showing {rows.length} rows • Live debounced • Deterministic SHA-256 verifiable (0-orphan guaranteed)
         </span>
       </footer>
     </main>

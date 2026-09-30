@@ -432,7 +432,7 @@ export const ConfigPanel: React.FC = () => {
                           <option value="hmac_hash">HMAC Hash (Deterministic pseudonyms)</option>
                           <option value="drop">Drop (Omit from output)</option>
                           <option value="generalize">Generalize (Bucket ranges)</option>
-                          <option value="dp_marginals">ε-DP Marginals (Laplace noise)</option>
+                          <option value="dp_marginals">εε-DP Marginals (Laplace noise)</option>
                         </select>
                       </div>
 

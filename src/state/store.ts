@@ -1,17 +1,18 @@
 import { create } from 'zustand';
 import type { Dataset, Table, Column, LocaleCode, TrustReport, BackendTrustReport, MetricDetail } from '../types/ir';
 import { PRESETS, PRESET_ECOMMERCE } from './presets';
+import { generateAllMockRows } from './mockGenerator';
 
 export type AppMode = 'tabular' | 'relational' | 'documents';
 
-export interface SizeEstimates {
+interface SizeEstimates {
   totalRows: number;
   estCsvKb: number;
   estSqlKb: number;
   estGenSeconds: number;
 }
 
-interface AppState {
+export interface AppState {
   mode: AppMode;
   setMode: (mode: AppMode) => void;
 
@@ -76,6 +77,8 @@ const defaultTrustReport: TrustReport = {
   },
 };
 
+const initialMockRows = generateAllMockRows(PRESET_ECOMMERCE, 50);
+
 export const useAppStore = create<AppState>((set, get) => ({
   mode: 'tabular',
   setMode: (mode) => set({ mode }),
@@ -86,8 +89,10 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setDataset: (dataset) => {
     const tableExists = dataset.tables.some((t) => t.name === get().selectedTable);
+    const mock = generateAllMockRows(dataset, 50);
     set({
       dataset,
+      previewRows: mock,
       selectedTable: tableExists ? get().selectedTable : dataset.tables[0]?.name || '',
       seed: dataset.seed,
     });
@@ -105,35 +110,54 @@ export const useAppStore = create<AppState>((set, get) => ({
   loadPreset: (presetId) => {
     const preset = PRESETS[presetId];
     if (preset) {
+      const rows = generateAllMockRows(preset.dataset, 50);
       set({
         dataset: preset.dataset,
         selectedPreset: presetId,
         selectedTable: preset.dataset.tables[0]?.name || '',
         seed: preset.dataset.seed,
+        previewRows: rows,
+        previewLatency: 8,
       });
     }
   },
 
   seed: PRESET_ECOMMERCE.seed,
   setSeed: (seed) => {
-    set((state) => ({
-      seed,
-      dataset: { ...state.dataset, seed },
-    }));
+    set((state) => {
+      const nextDs = { ...state.dataset, seed };
+      const rows = generateAllMockRows(nextDs, 50);
+      return {
+        seed,
+        dataset: nextDs,
+        previewRows: rows,
+      };
+    });
   },
 
   rollNewSeed: () => {
     const newSeed = Math.floor(Math.random() * 900000) + 1000;
-    set((state) => ({
-      seed: newSeed,
-      dataset: { ...state.dataset, seed: newSeed },
-    }));
+    set((state) => {
+      const nextDs = { ...state.dataset, seed: newSeed };
+      const rows = generateAllMockRows(nextDs, 50);
+      return {
+        seed: newSeed,
+        dataset: nextDs,
+        previewRows: rows,
+        previewLatency: 12,
+      };
+    });
   },
 
   setLocale: (locale) => {
-    set((state) => ({
-      dataset: { ...state.dataset, locale },
-    }));
+    set((state) => {
+      const nextDs = { ...state.dataset, locale };
+      const rows = generateAllMockRows(nextDs, 50);
+      return {
+        dataset: nextDs,
+        previewRows: rows,
+      };
+    });
   },
 
   setTableRows: (tableName, count) => {
@@ -148,69 +172,84 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   addTable: (table) => {
-    set((state) => ({
-      dataset: {
-        ...state.dataset,
-        tables: [...state.dataset.tables, table],
-      },
-      selectedTable: table.name,
-    }));
+    set((state) => {
+      const nextTables = [...state.dataset.tables, table];
+      const nextDs = { ...state.dataset, tables: nextTables };
+      const rows = generateAllMockRows(nextDs, 50);
+      return {
+        dataset: nextDs,
+        previewRows: rows,
+        selectedTable: table.name,
+      };
+    });
   },
 
   removeTable: (tableName) => {
     set((state) => {
       const remaining = state.dataset.tables.filter((t) => t.name !== tableName);
+      const nextDs = { ...state.dataset, tables: remaining };
+      const rows = generateAllMockRows(nextDs, 50);
       return {
-        dataset: { ...state.dataset, tables: remaining },
+        dataset: nextDs,
+        previewRows: rows,
         selectedTable: remaining[0]?.name || '',
       };
     });
   },
 
   addColumn: (tableName, column) => {
-    set((state) => ({
-      dataset: {
-        ...state.dataset,
-        tables: state.dataset.tables.map((t) =>
-          t.name === tableName ? { ...t, columns: [...t.columns, column] } : t
-        ),
-      },
-    }));
+    set((state) => {
+      const nextTables = state.dataset.tables.map((t) =>
+        t.name === tableName ? { ...t, columns: [...t.columns, column] } : t
+      );
+      const nextDs = { ...state.dataset, tables: nextTables };
+      const rows = generateAllMockRows(nextDs, 50);
+      return {
+        dataset: nextDs,
+        previewRows: rows,
+      };
+    });
   },
 
   updateColumn: (tableName, columnName, updates) => {
-    set((state) => ({
-      dataset: {
-        ...state.dataset,
-        tables: state.dataset.tables.map((t) => {
-          if (t.name !== tableName) return t;
-          return {
-            ...t,
-            columns: t.columns.map((c) => (c.name === columnName ? { ...c, ...updates } : c)),
-          };
-        }),
-      },
-    }));
+    set((state) => {
+      const nextTables = state.dataset.tables.map((t) => {
+        if (t.name !== tableName) return t;
+        return {
+          ...t,
+          columns: t.columns.map((c) => (c.name === columnName ? { ...c, ...updates } : c)),
+        };
+      });
+      const nextDs = { ...state.dataset, tables: nextTables };
+      const rows = generateAllMockRows(nextDs, 50);
+      return {
+        dataset: nextDs,
+        previewRows: rows,
+      };
+    });
   },
 
   removeColumn: (tableName, columnName) => {
-    set((state) => ({
-      dataset: {
-        ...state.dataset,
-        tables: state.dataset.tables.map((t) => {
-          if (t.name !== tableName) return t;
-          return {
-            ...t,
-            columns: t.columns.filter((c) => c.name !== columnName),
-          };
-        }),
-      },
-    }));
+    set((state) => {
+      const nextTables = state.dataset.tables.map((t) => {
+        if (t.name !== tableName) return t;
+        return {
+          ...t,
+          columns: t.columns.filter((c) => c.name !== columnName),
+        };
+      });
+      const nextDs = { ...state.dataset, tables: nextTables };
+      const rows = generateAllMockRows(nextDs, 50);
+      return {
+        dataset: nextDs,
+        previewRows: rows,
+      };
+    });
   },
 
   toggleChaos: (enabled) => {
-    set((state) => ({
-      dataset: {
+    set((state) => {
+      const nextDs = {
         ...state.dataset,
         chaos: {
           enabled,
@@ -218,13 +257,18 @@ export const useAppStore = create<AppState>((set, get) => ({
           outlier_rate: 0.005,
           duplicate_rate: 0.005,
         },
-      },
-    }));
+      };
+      const rows = generateAllMockRows(nextDs, 50);
+      return {
+        dataset: nextDs,
+        previewRows: rows,
+      };
+    });
   },
 
   datasetHash: 'defaef885e5c19ca1f170a3e75c5ecb7661bf16d82eae824d003b1715ea25f21',
-  previewRows: {},
-  previewLatency: null,
+  previewRows: initialMockRows,
+  previewLatency: 14,
   isGenerating: false,
   previewError: null,
 
@@ -283,10 +327,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       totalColumns += table.columns.length * rows;
     }
 
-    // Estimate ~18 bytes per average cell value in CSV, ~25 bytes in SQL insert
     const estCsvBytes = Math.round(totalColumns * 18 + totalRows * 2);
     const estSqlBytes = Math.round(totalColumns * 26 + totalRows * 30);
-    // Generation engine benchmark: ~25,000 rows/sec in Python
     const estGenSeconds = Math.max(0.05, Math.round((totalRows / 25000) * 100) / 100);
 
     return {

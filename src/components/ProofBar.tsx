@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useAppStore } from '../state/store';
 
 export const ProofBar: React.FC = () => {
@@ -35,37 +35,41 @@ export const ProofBar: React.FC = () => {
           className={`verdict-badge ${trustReport.correct_verdict || 'pass'}`}
           title={`${trustReport.correct_reason} (Click to open Trust Report)`}
           onClick={() => toggleTrustDrawer(true)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', font: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 5 }}
         >
-          <span className="verdict-icon" aria-hidden="true">
-            {trustReport.correct_verdict === 'fail' ? '✗' : trustReport.correct_verdict === 'warn' ? '!' : '✓'}
-          </span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
           <span className="verdict-text">Correct</span>
         </button>
+
         <button
           type="button"
           className={`verdict-badge ${trustReport.realistic_verdict || 'pass'}`}
           title={`${trustReport.realistic_reason} (Click to open Trust Report)`}
           onClick={() => toggleTrustDrawer(true)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', font: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 5 }}
         >
-          <span className="verdict-icon" aria-hidden="true">
-            {trustReport.realistic_verdict === 'fail' ? '✗' : trustReport.realistic_verdict === 'warn' ? '!' : '✓'}
-          </span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+          </svg>
           <span className="verdict-text">Realistic</span>
         </button>
+
         <button
           type="button"
           className={`verdict-badge ${trustReport.safe_verdict || 'pass'}`}
           title={`${trustReport.safe_reason} (Click to open Trust Report)`}
           onClick={() => toggleTrustDrawer(true)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', font: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 5 }}
         >
-          <span className="verdict-icon" aria-hidden="true">
-            {trustReport.safe_verdict === 'fail' ? '✗' : trustReport.safe_verdict === 'warn' ? '!' : '✓'}
-          </span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
           <span className="verdict-text">Safe</span>
         </button>
+
         <button
           type="button"
           className="btn-text-action"
@@ -77,13 +81,17 @@ export const ProofBar: React.FC = () => {
             fontWeight: 600,
             background: 'rgba(22, 122, 109, 0.08)',
             border: '1px solid rgba(22, 122, 109, 0.2)',
-            padding: '2px 8px',
+            padding: '3px 9px',
             borderRadius: 4,
             cursor: 'pointer',
-            marginLeft: 4,
+            marginLeft: 6,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
           }}
         >
-          {isTrustDrawerOpen ? 'Close Report ✕' : 'Trust Report ↗'}
+          <span>{isTrustDrawerOpen ? 'Close Report' : 'Trust Report'}</span>
+          <span aria-hidden="true">{isTrustDrawerOpen ? '✕' : '→'}</span>
         </button>
       </div>
 
@@ -97,8 +105,16 @@ export const ProofBar: React.FC = () => {
             onClick={rollNewSeed}
             title="Roll a new deterministic seed"
             aria-label="Roll a new deterministic seed"
+            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            🎲
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="5" />
+              <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
+              <circle cx="15.5" cy="8.5" r="1.5" fill="currentColor" />
+              <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+              <circle cx="8.5" cy="15.5" r="1.5" fill="currentColor" />
+              <circle cx="15.5" cy="15.5" r="1.5" fill="currentColor" />
+            </svg>
           </button>
         </div>
 
@@ -109,16 +125,19 @@ export const ProofBar: React.FC = () => {
             className="hash-pill mono"
             onClick={copyHash}
             title={`Full hash: ${datasetHash} (Click to copy)`}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
           >
             <span>{truncatedHash}</span>
-            <span className="copy-indicator">{copied ? '✓' : '⧉'}</span>
+            <span className="copy-indicator" style={{ fontSize: 10 }}>
+              {copied ? '✓ Copied' : '📋'}
+            </span>
           </button>
         </div>
 
         <div className="proof-item">
           <span className="proof-label">Planned</span>
           <span className="proof-value mono">
-            {estimates.totalRows.toLocaleString()} rows · ~{estimates.estCsvKb} KB
+            {estimates.totalRows.toLocaleString()} rows • ~{estimates.estCsvKb} KB
           </span>
         </div>
 
@@ -128,7 +147,7 @@ export const ProofBar: React.FC = () => {
               <span className="spinner-dot" /> Refreshing...
             </span>
           ) : (
-            <span className="latency-chip mono" title="Debounced roundtrip generation latency">
+            <span className="latency-chip mono" title="Generation latency">
               ⚡ {previewLatency !== null ? `${previewLatency} ms` : 'Synced'}
             </span>
           )}
