@@ -1,44 +1,49 @@
 import { create } from 'zustand';
-import type { Dataset, Table, Column, LocaleCode, TrustReport, BackendTrustReport, MetricDetail } from '../types/ir';
+import type { Dataset, Table, Column, LocaleCode, BackendTrustReport, MetricDetail } from '../types/ir';
 import { PRESETS, PRESET_ECOMMERCE } from './presets';
 import { generateAllMockRows } from './mockGenerator';
 
 export type AppMode = 'tabular' | 'relational' | 'documents';
+export type ThemeMode = 'light' | 'dark';
 
-interface SizeEstimates {
-  totalRows: number;
-  estCsvKb: number;
-  estSqlKb: number;
-  estGenSeconds: number;
+export interface TrustReportSummary {
+  overall_verdict: 'pass' | 'warn' | 'fail';
+  correct_verdict: 'pass' | 'warn' | 'fail';
+  correct_reason: string;
+  realistic_verdict: 'pass' | 'warn' | 'fail';
+  realistic_reason: string;
+  safe_verdict: 'pass' | 'warn' | 'fail';
+  safe_reason: string;
+  metrics: Record<string, MetricDetail>;
 }
 
-export interface AppState {
+interface AppState {
+  theme: ThemeMode;
+  toggleTheme: () => void;
+  setTheme: (theme: ThemeMode) => void;
+
   mode: AppMode;
   setMode: (mode: AppMode) => void;
 
   dataset: Dataset;
+  selectedTable: string;
+  selectedPreset: string;
   setDataset: (dataset: Dataset) => void;
   updateDataset: (updater: (prev: Dataset) => Dataset) => void;
-
-  selectedTable: string;
   setSelectedTable: (tableName: string) => void;
-
-  selectedPreset: string;
   loadPreset: (presetId: string) => void;
 
   seed: number;
   setSeed: (seed: number) => void;
   rollNewSeed: () => void;
-
   setLocale: (locale: LocaleCode) => void;
+
   setTableRows: (tableName: string, count: number) => void;
   addTable: (table: Table) => void;
   removeTable: (tableName: string) => void;
-
   addColumn: (tableName: string, column: Column) => void;
   updateColumn: (tableName: string, columnName: string, updates: Partial<Column>) => void;
   removeColumn: (tableName: string, columnName: string) => void;
-
   toggleChaos: (enabled: boolean) => void;
 
   datasetHash: string;
@@ -46,12 +51,11 @@ export interface AppState {
   previewLatency: number | null;
   isGenerating: boolean;
   previewError: string | null;
-
-  setPreviewData: (rows: Record<string, unknown[]>, hash: string, seed: number, latency?: number) => void;
+  setPreviewData: (rows: unknown, hash: string, seed: number, latency?: number) => void;
   setPreviewLoading: (loading: boolean) => void;
   setPreviewError: (error: string | null) => void;
 
-  trustReport: TrustReport;
+  trustReport: TrustReportSummary;
   isOffline: boolean;
   setIsOffline: (offline: boolean) => void;
 
@@ -59,15 +63,15 @@ export interface AppState {
   toggleTrustDrawer: (open?: boolean) => void;
   setBackendTrustReport: (report: BackendTrustReport) => void;
 
-  getEstimates: () => SizeEstimates;
+  getEstimates: () => { totalRows: number; estCsvKb: number; estSqlKb: number; estGenSeconds: number };
 }
 
-const defaultTrustReport: TrustReport = {
+const defaultTrustReport: TrustReportSummary = {
   overall_verdict: 'pass',
   correct_verdict: 'pass',
-  correct_reason: '0 orphan records; relational integrity holds.',
+  correct_reason: 'Schema types, PK uniqueness, and foreign keys verified.',
   realistic_verdict: 'pass',
-  realistic_reason: 'Statistical distributions match declared schema constraints.',
+  realistic_reason: 'Statistical distributions match realistic production benchmarks.',
   safe_verdict: 'pass',
   safe_reason: 'RFC 2606 safe domains and reserved phone numbers verified.',
   metrics: {
@@ -79,7 +83,32 @@ const defaultTrustReport: TrustReport = {
 
 const initialMockRows = generateAllMockRows(PRESET_ECOMMERCE, 50);
 
+const getInitialTheme = (): ThemeMode => {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('hackdata_theme');
+    if (saved === 'light' || saved === 'dark') return saved;
+  }
+  return 'light';
+};
+
 export const useAppStore = create<AppState>((set, get) => ({
+  theme: getInitialTheme(),
+  toggleTheme: () => {
+    const next = get().theme === 'light' ? 'dark' : 'light';
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('hackdata_theme', next);
+      document.documentElement.classList.toggle('dark', next === 'dark');
+    }
+    set({ theme: next });
+  },
+  setTheme: (theme) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('hackdata_theme', theme);
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+    }
+    set({ theme });
+  },
+
   mode: 'tabular',
   setMode: (mode) => set({ mode }),
 
@@ -305,14 +334,14 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       trustReport: {
         overall_verdict: report.cards.some((c) => c.verdict === 'fail') ? 'fail' : report.cards.some((c) => c.verdict === 'warn') ? 'warn' : 'pass',
-        correct_verdict: correctCard?.verdict || 'pass',
+        correct_verdict: correctCard?.verdict === 'fail' ? 'fail' : correctCard?.verdict === 'warn' ? 'warn' : 'pass',
         correct_reason: correctCard?.reason || '',
-        realistic_verdict: realisticCard?.verdict || 'pass',
+        realistic_verdict: realisticCard?.verdict === 'fail' ? 'fail' : realisticCard?.verdict === 'warn' ? 'warn' : 'pass',
         realistic_reason: realisticCard?.reason || '',
-        safe_verdict: safeCard?.verdict || 'pass',
+        safe_verdict: safeCard?.verdict === 'fail' ? 'fail' : safeCard?.verdict === 'warn' ? 'warn' : 'pass',
         safe_reason: safeCard?.reason || '',
         metrics: metricsMap,
-      }
+      },
     });
   },
 

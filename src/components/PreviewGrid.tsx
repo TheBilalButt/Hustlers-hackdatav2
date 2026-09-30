@@ -82,28 +82,32 @@ export const PreviewGrid: React.FC = () => {
             {rows.length} rows loaded • {(table.row_count || 1000).toLocaleString()} planned in dataset
           </span>
           {dataset.chaos?.enabled && (
-            <span style={{ fontSize: 10, fontWeight: 700, backgroundColor: 'rgba(122, 62, 177, 0.12)', color: 'var(--chaos)', border: '1px solid var(--chaos)', padding: '2px 6px', borderRadius: 4, marginLeft: 8 }}>
-              ⚡ Chaos Active
+            <span className="chaos-tag">
+              Chaos Active
             </span>
           )}
         </div>
 
         <div className="preview-actions">
           {/* Quick Filter */}
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <div className="search-box">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5, marginLeft: 6 }}>
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
             <input
               type="text"
-              className="input-text"
-              placeholder="Search table rows..."
+              className="search-input"
+              placeholder="Filter table rows..."
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
-              style={{ fontSize: 11, padding: '4px 8px', width: 170 }}
             />
             {filterText && (
               <button
                 type="button"
+                className="search-clear-btn"
                 onClick={() => setFilterText('')}
-                style={{ position: 'absolute', right: 6, background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--slate)' }}
+                title="Clear filter"
               >
                 ✕
               </button>
@@ -115,8 +119,13 @@ export const PreviewGrid: React.FC = () => {
             className="btn btn-outline btn-sm"
             onClick={handleExportCsv}
             disabled={rows.length === 0}
-            title="Export current rows as CSV"
+            title="Export rows as CSV"
           >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 4 }}>
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
             Export CSV
           </button>
           <button
@@ -124,8 +133,13 @@ export const PreviewGrid: React.FC = () => {
             className="btn btn-outline btn-sm"
             onClick={handleExportJson}
             disabled={rows.length === 0}
-            title="Export current rows as JSON"
+            title="Export rows as JSON"
           >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 4 }}>
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
             Export JSON
           </button>
         </div>
@@ -133,7 +147,11 @@ export const PreviewGrid: React.FC = () => {
 
       {previewError && (
         <div className="preview-error-banner" role="alert">
-          <span className="error-icon" aria-hidden="true">⚠️</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
           <div className="error-text">
             <strong>Preview notice:</strong> {previewError}
           </div>
@@ -166,10 +184,10 @@ export const PreviewGrid: React.FC = () => {
               rows.map((row, idx) => {
                 const hasChaos = !!row._hasChaos;
                 return (
-                  <tr key={idx} className={idx % 2 === 1 ? 'row-zebra' : ''} style={hasChaos ? { backgroundColor: 'rgba(122, 62, 177, 0.05)' } : undefined}>
+                  <tr key={idx} className={idx % 2 === 1 ? 'row-zebra' : ''} style={hasChaos ? { backgroundColor: 'var(--chaos-bg)' } : undefined}>
                     <td className="cell-index mono">
                       {idx + 1}
-                      {hasChaos && <span title="Chaos Injected" style={{ color: 'var(--chaos)', fontSize: 9, marginLeft: 2 }}>⚡</span>}
+                      {hasChaos && <span title="Chaos Injected" className="chaos-dot" />}
                     </td>
                     {table.columns.map((c) => {
                       const rawVal = row[c.name];
@@ -195,7 +213,7 @@ export const PreviewGrid: React.FC = () => {
             ) : isGenerating ? (
               <tr>
                 <td colSpan={table.columns.length + 1} className="table-loading-cell">
-                  <div className="loading-shimmer">Synthesizing deterministic preview rows...</div>
+                  <div className="loading-shimmer">Generating deterministic preview rows...</div>
                 </td>
               </tr>
             ) : (
@@ -211,7 +229,7 @@ export const PreviewGrid: React.FC = () => {
 
       <footer className="preview-footer">
         <span className="footer-info">
-          Showing {rows.length} rows • Live debounced • Deterministic SHA-256 verifiable (0-orphan guaranteed)
+          Showing {rows.length} rows • Live responsive preview • Verified zero-orphan relational integrity
         </span>
       </footer>
     </main>

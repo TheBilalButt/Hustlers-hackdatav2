@@ -3,7 +3,7 @@
  * Reference: TRD Section 4
  */
 
-export type LocaleCode = 'en_US' | 'en_IN' | 'de_DE';
+export type LocaleCode = 'en_US' | 'en_PK' | 'en_IN' | 'de_DE';
 
 export type SemanticType =
   | 'id'

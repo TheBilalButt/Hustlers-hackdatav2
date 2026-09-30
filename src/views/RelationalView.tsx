@@ -1,112 +1,64 @@
 import React, { useState, useMemo } from 'react';
-import ReactFlow, { Background, Controls, MiniMap, type Node, type Edge, MarkerType } from 'reactflow';
+import ReactFlow, { Background, Controls, MiniMap } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { useAppStore } from '../state/store';
 import type { Relationship } from '../types/ir';
 
-const TableNodeComponent: React.FC<{ data: { label: string; columns: string[]; rowCount: number; isSelected: boolean } }> = ({ data }) => {
+// Custom Table Node for ReactFlow
+const TableNode: React.FC<{ data: { label: string; columns: { name: string; pk?: boolean; type: string }[] } }> = ({ data }) => {
   return (
-    <div
-      style={{
-        padding: '10px 14px',
-        borderRadius: 8,
-        background: '#fff',
-        border: data.isSelected ? '2.5px solid var(--teal)' : '1.5px solid var(--line)',
-        boxShadow: data.isSelected ? '0 4px 12px rgba(22, 122, 109, 0.2)' : '0 2px 4px rgba(0,0,0,0.05)',
-        minWidth: 160,
-        fontFamily: 'inherit',
-      }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--line)', paddingBottom: 6, marginBottom: 6 }}>
-        <strong style={{ fontSize: 13, color: 'var(--ink)' }}>{data.label}</strong>
-        <span className="mono" style={{ fontSize: 10, color: 'var(--slate)', background: 'var(--sand)', padding: '1px 5px', borderRadius: 3 }}>
-          {data.rowCount} rows
-        </span>
+    <div className="table-flow-node">
+      <div className="node-header">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <line x1="3" y1="9" x2="21" y2="9" />
+          <line x1="9" y1="21" x2="9" y2="9" />
+        </svg>
+        <span className="mono font-bold" style={{ fontSize: 12 }}>{data.label}</span>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-        {data.columns.slice(0, 5).map((col, idx) => (
-          <div key={idx} className="mono" style={{ fontSize: 11, color: idx === 0 ? 'var(--teal)' : 'var(--slate)', display: 'flex', alignItems: 'center', gap: 4 }}>
-            {idx === 0 && <span style={{ fontSize: 9, fontWeight: 700, background: 'var(--ink)', color: '#fff', padding: '0 3px', borderRadius: 2 }}>PK</span>}
-            <span>{col}</span>
+      <div className="node-body">
+        {data.columns.map((col) => (
+          <div key={col.name} className="node-col-row">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              {col.pk && <span className="pk-badge-xs">PK</span>}
+              <span className="mono" style={{ fontSize: 11 }}>{col.name}</span>
+            </div>
+            <span className="node-col-type">{col.type}</span>
           </div>
         ))}
-        {data.columns.length > 5 && (
-          <div style={{ fontSize: 10, color: 'var(--slate)', fontStyle: 'italic', marginTop: 2 }}>
-            +{data.columns.length - 5} more columns
-          </div>
-        )}
       </div>
     </div>
   );
 };
 
-const nodeTypes = {
-  tableNode: TableNodeComponent,
-};
+const nodeTypes = { tableNode: TableNode };
 
 export const RelationalView: React.FC = () => {
-  const { dataset, selectedTable, setSelectedTable, previewRows, updateDataset } = useAppStore();
-  const [showAddRel, setShowAddRel] = useState(false);
+  const { dataset, updateDataset, selectedTable, setSelectedTable, previewRows } = useAppStore();
 
-  const [parentTable, setParentTable] = useState('');
-  const [parentKey, setParentKey] = useState('');
-  const [childTable, setChildTable] = useState('');
-  const [childKey, setChildKey] = useState('');
+  const [showAddRel, setShowAddRel] = useState(false);
+  const [parentTable, setParentTable] = useState(dataset.tables[0]?.name || '');
+  const [childTable, setChildTable] = useState(dataset.tables[1]?.name || dataset.tables[0]?.name || '');
+  const [parentCol, setParentCol] = useState('');
+  const [childCol, setChildCol] = useState('');
   const [relMin, setRelMin] = useState(1);
   const [relMax, setRelMax] = useState(5);
 
-  const relationships: Relationship[] = useMemo(() => dataset.relationships || [], [dataset.relationships]);
-
-  const nodes: Node[] = useMemo(() => {
-    const spacingX = 260;
-    const spacingY = 160;
-
-    return dataset.tables.map((table, idx) => {
-      const col = idx % 2;
-      const row = Math.floor(idx / 2);
-
-      return {
-        id: table.name,
-        type: 'tableNode',
-        position: { x: 50 + col * spacingX, y: 50 + row * spacingY },
-        data: {
-          label: table.name,
-          columns: table.columns.map((c) => c.name),
-          rowCount: table.row_count || 1000,
-          isSelected: table.name === selectedTable,
-        },
-      };
-    });
-  }, [dataset.tables, selectedTable]);
-
-  const edges: Edge[] = useMemo(() => {
-    return relationships.map((r, idx) => ({
-      id: `rel-${idx}-${r.parent}-${r.child}`,
-      source: r.parent,
-      target: r.child,
-      animated: true,
-      label: `${r.cardinality.min_val}..${r.cardinality.max_val}`,
-      labelStyle: { fill: 'var(--teal)', fontWeight: 600, fontSize: 11 },
-      style: { stroke: 'var(--teal)', strokeWidth: 2 },
-      markerEnd: {
-        type: MarkerType.ArrowClosed,
-        color: 'var(--teal)',
-      },
-    }));
-  }, [relationships]);
+  const relationships = useMemo(() => dataset.relationships || [], [dataset.relationships]);
 
   const handleAddRelationship = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!parentTable || !childTable || !parentKey || !childKey) return;
+    if (!parentTable || !childTable || !parentCol || !childCol) return;
 
     const newRel: Relationship = {
       parent: parentTable,
-      parent_key: parentKey,
+      parent_key: parentCol,
       child: childTable,
-      child_key: childKey,
+      child_key: childCol,
       kind: 'one_to_many',
       cardinality: {
-        dist: 'uniform',
+        dist: 'poisson',
+        params: { lam: Math.round((relMin + relMax) / 2) },
         min_val: relMin,
         max_val: relMax,
       },
@@ -127,91 +79,119 @@ export const RelationalView: React.FC = () => {
     }));
   };
 
+  const nodes = useMemo(() => {
+    const spacing = 280;
+    return dataset.tables.map((t, idx) => ({
+      id: t.name,
+      type: 'tableNode',
+      position: { x: 50 + (idx % 3) * spacing, y: 50 + Math.floor(idx / 3) * 220 },
+      data: {
+        label: t.name,
+        columns: t.columns.map((c) => ({
+          name: c.name,
+          pk: c.pk,
+          type: c.semantic_type,
+        })),
+      },
+    }));
+  }, [dataset.tables]);
+
+  const edges = useMemo(() => {
+    return relationships.map((r, idx) => ({
+      id: `e-${r.parent}-${r.child}-${idx}`,
+      source: r.parent,
+      target: r.child,
+      label: `${r.parent_key} -> ${r.child_key}`,
+      animated: true,
+      style: { stroke: 'var(--teal)', strokeWidth: 2 },
+      labelStyle: { fill: 'var(--ink)', fontWeight: 600, fontSize: 11, fontFamily: 'var(--font-mono)' },
+      labelBgStyle: { fill: 'var(--card-bg)', fillOpacity: 0.9 },
+    }));
+  }, [relationships]);
+
   const activeTable = dataset.tables.find((t) => t.name === selectedTable) || dataset.tables[0];
   const activeRows = activeTable ? previewRows[activeTable.name] || [] : [];
 
   return (
     <div style={{ display: 'flex', width: '100%', height: 'calc(100vh - 84px)', overflow: 'hidden' }}>
-      {/* Sidebar: Relationships & Invariants */}
-      <aside className="config-sidebar" style={{ width: 340, overflowY: 'auto' }}>
+      {/* Relational Sidebar Controls */}
+      <aside className="config-sidebar" style={{ width: 330, overflowY: 'auto' }}>
         <section className="config-section">
           <div className="section-header">
-            <h2 className="section-title">Relationships (Foreign Keys)</h2>
+            <h2 className="section-title">Relationships ({relationships.length})</h2>
             <button
               type="button"
-              className="btn btn-outline btn-sm"
+              className="btn btn-sm btn-outline"
               onClick={() => {
+                setShowAddRel(!showAddRel);
                 if (dataset.tables.length >= 2) {
                   setParentTable(dataset.tables[0].name);
-                  setParentKey(dataset.tables[0].columns[0]?.name || '');
                   setChildTable(dataset.tables[1].name);
-                  setChildKey(dataset.tables[1].columns[0]?.name || '');
+                  setParentCol(dataset.tables[0].columns[0]?.name || '');
+                  setChildCol(dataset.tables[1].columns[0]?.name || '');
                 }
-                setShowAddRel(!showAddRel);
               }}
             >
-              + Link
+              {showAddRel ? 'Cancel' : '+ Link'}
             </button>
           </div>
 
           {showAddRel && (
-            <form onSubmit={handleAddRelationship} className="card" style={{ marginBottom: 12, padding: 10, background: 'var(--sand-light)' }}>
-              <div className="form-row" style={{ marginBottom: 6 }}>
-                <div style={{ flex: 1 }}>
-                  <label className="field-label">Parent Table</label>
+            <form onSubmit={handleAddRelationship} className="add-table-form" style={{ marginBottom: 12 }}>
+              <div className="form-field" style={{ marginBottom: 6 }}>
+                <label className="field-label">Parent Table & Key</label>
+                <div style={{ display: 'flex', gap: 4 }}>
                   <select
                     className="input-select"
                     value={parentTable}
                     onChange={(e) => {
                       setParentTable(e.target.value);
-                      const t = dataset.tables.find((x) => x.name === e.target.value);
-                      if (t?.columns[0]) setParentKey(t.columns[0].name);
+                      const t = dataset.tables.find((tbl) => tbl.name === e.target.value);
+                      if (t) setParentCol(t.columns[0]?.name || '');
                     }}
+                    style={{ flex: 1 }}
                   >
                     {dataset.tables.map((t) => (
                       <option key={t.name} value={t.name}>{t.name}</option>
                     ))}
                   </select>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label className="field-label">PK Column</label>
                   <select
-                    className="input-select"
-                    value={parentKey}
-                    onChange={(e) => setParentKey(e.target.value)}
+                    className="input-select mono"
+                    value={parentCol}
+                    onChange={(e) => setParentCol(e.target.value)}
+                    style={{ flex: 1 }}
                   >
-                    {dataset.tables.find((t) => t.name === parentTable)?.columns.map((c) => (
+                    {(dataset.tables.find((t) => t.name === parentTable)?.columns || []).map((c) => (
                       <option key={c.name} value={c.name}>{c.name}</option>
                     ))}
                   </select>
                 </div>
               </div>
 
-              <div className="form-row" style={{ marginBottom: 6 }}>
-                <div style={{ flex: 1 }}>
-                  <label className="field-label">Child Table</label>
+              <div className="form-field" style={{ marginBottom: 6 }}>
+                <label className="field-label">Child Table & Foreign Key</label>
+                <div style={{ display: 'flex', gap: 4 }}>
                   <select
                     className="input-select"
                     value={childTable}
                     onChange={(e) => {
                       setChildTable(e.target.value);
-                      const t = dataset.tables.find((x) => x.name === e.target.value);
-                      if (t?.columns[0]) setChildKey(t.columns[0].name);
+                      const t = dataset.tables.find((tbl) => tbl.name === e.target.value);
+                      if (t) setChildCol(t.columns[0]?.name || '');
                     }}
+                    style={{ flex: 1 }}
                   >
                     {dataset.tables.map((t) => (
                       <option key={t.name} value={t.name}>{t.name}</option>
                     ))}
                   </select>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label className="field-label">FK Column</label>
                   <select
-                    className="input-select"
-                    value={childKey}
-                    onChange={(e) => setChildKey(e.target.value)}
+                    className="input-select mono"
+                    value={childCol}
+                    onChange={(e) => setChildCol(e.target.value)}
+                    style={{ flex: 1 }}
                   >
-                    {dataset.tables.find((t) => t.name === childTable)?.columns.map((c) => (
+                    {(dataset.tables.find((t) => t.name === childTable)?.columns || []).map((c) => (
                       <option key={c.name} value={c.name}>{c.name}</option>
                     ))}
                   </select>
@@ -219,19 +199,19 @@ export const RelationalView: React.FC = () => {
               </div>
 
               <div className="form-row" style={{ marginBottom: 8 }}>
-                <div style={{ width: 60 }}>
-                  <label className="field-label">Min</label>
+                <div className="form-field" style={{ flex: 1 }}>
+                  <label className="field-label">Min Children</label>
                   <input
                     type="number"
                     className="input-text mono"
                     value={relMin}
-                    min={0}
+                    min={1}
                     max={50}
-                    onChange={(e) => setRelMin(parseInt(e.target.value, 10) || 0)}
+                    onChange={(e) => setRelMin(parseInt(e.target.value, 10) || 1)}
                   />
                 </div>
-                <div style={{ width: 60 }}>
-                  <label className="field-label">Max</label>
+                <div className="form-field" style={{ flex: 1 }}>
+                  <label className="field-label">Max Children</label>
                   <input
                     type="number"
                     className="input-text mono"
@@ -286,26 +266,26 @@ export const RelationalView: React.FC = () => {
           </div>
         </section>
 
-        {/* Invariants Section */}
+        {/* Cross-Table Invariants Section */}
         <section className="config-section">
           <div className="section-header">
-            <h2 className="section-title">Cross-Table Invariants (FR-04)</h2>
+            <h2 className="section-title">Relationships & Invariants</h2>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div className="card" style={{ padding: 8, margin: 0, background: 'var(--sand-light)', border: '1px solid var(--line)' }}>
-              <div style={{ fontWeight: 600, fontSize: 12, color: 'var(--teal)' }}>∑ Sum Children Invariant</div>
+            <div className="card" style={{ padding: 10, margin: 0, background: 'var(--sand-light)', border: '1px solid var(--line)', borderRadius: 6 }}>
+              <div style={{ fontWeight: 600, fontSize: 12, color: 'var(--teal)' }}>Sum of Items Rule</div>
               <div className="mono" style={{ fontSize: 11, marginTop: 2 }}>
-                orders.total_amount = ∑(order_items.line_total)
+                orders.total_amount = sum(order_items.line_total)
               </div>
             </div>
-            <div className="card" style={{ padding: 8, margin: 0, background: 'var(--sand-light)', border: '1px solid var(--line)' }}>
-              <div style={{ fontWeight: 600, fontSize: 12, color: 'var(--teal)' }}>⏱ Temporal Order Invariant</div>
+            <div className="card" style={{ padding: 10, margin: 0, background: 'var(--sand-light)', border: '1px solid var(--line)', borderRadius: 6 }}>
+              <div style={{ fontWeight: 600, fontSize: 12, color: 'var(--teal)' }}>Temporal Sequence Rule</div>
               <div className="mono" style={{ fontSize: 11, marginTop: 2 }}>
-                orders.shipped_date ≥ orders.order_date
+                orders.shipped_date &ge; orders.order_date
               </div>
             </div>
-            <div className="card" style={{ padding: 8, margin: 0, background: 'var(--sand-light)', border: '1px solid var(--line)' }}>
-              <div style={{ fontWeight: 600, fontSize: 12, color: 'var(--teal)' }}>⚖ Running Balance Invariant</div>
+            <div className="card" style={{ padding: 10, margin: 0, background: 'var(--sand-light)', border: '1px solid var(--line)', borderRadius: 6 }}>
+              <div style={{ fontWeight: 600, fontSize: 12, color: 'var(--teal)' }}>Running Balance Rule</div>
               <div className="mono" style={{ fontSize: 11, marginTop: 2 }}>
                 accounts.balance = balance(t-1) + credit - debit
               </div>
@@ -315,7 +295,7 @@ export const RelationalView: React.FC = () => {
       </aside>
 
       {/* Main Canvas: React Flow ER Diagram + Split Preview */}
-      <main className="preview-canvas" style={{ padding: 0, display: 'flex', flexDirection: 'column' }}>
+      <main className="preview-canvas" style={{ padding: 0, display: 'flex', flexDirection: 'column', backgroundColor: 'var(--paper)' }}>
         <div style={{ flex: 1, position: 'relative' }}>
           <ReactFlow
             nodes={nodes}
@@ -324,27 +304,18 @@ export const RelationalView: React.FC = () => {
             onNodeClick={(_, node) => setSelectedTable(node.id)}
             fitView
           >
-            <Background color="#D1D5DB" gap={16} />
+            <Background color="var(--line)" gap={16} />
             <Controls />
             <MiniMap
               nodeColor={() => 'var(--teal)'}
-              style={{ background: 'var(--sand-light)', border: '1px solid var(--line)' }}
+              style={{ background: 'var(--card-bg)', border: '1px solid var(--line)' }}
             />
           </ReactFlow>
         </div>
 
         {/* Lower Split Preview Grid for selected table */}
         {activeTable && (
-          <div
-            style={{
-              height: 220,
-              borderTop: '2px solid var(--line)',
-              background: '#fff',
-              display: 'flex',
-              flexDirection: 'column',
-              padding: '8px 16px',
-            }}
-          >
+          <div className="relational-preview-panel">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 12, fontWeight: 700 }}>Table Preview:</span>
@@ -357,16 +328,7 @@ export const RelationalView: React.FC = () => {
                     key={t.name}
                     type="button"
                     onClick={() => setSelectedTable(t.name)}
-                    style={{
-                      fontSize: 11,
-                      padding: '2px 8px',
-                      borderRadius: 3,
-                      border: t.name === selectedTable ? '1.5px solid var(--teal)' : '1px solid var(--line)',
-                      background: t.name === selectedTable ? 'var(--mint)' : '#fff',
-                      color: t.name === selectedTable ? 'var(--teal)' : 'var(--slate)',
-                      cursor: 'pointer',
-                      fontWeight: t.name === selectedTable ? 700 : 500,
-                    }}
+                    className={`tab-btn-pill ${t.name === selectedTable ? 'active' : ''}`}
                   >
                     {t.name}
                   </button>
@@ -374,7 +336,7 @@ export const RelationalView: React.FC = () => {
               </div>
             </div>
 
-            <div style={{ flex: 1, overflow: 'auto', border: '1px solid var(--line)', borderRadius: 4 }}>
+            <div style={{ flex: 1, overflow: 'auto', border: '1px solid var(--line)', borderRadius: 6 }}>
               <table className="data-table">
                 <thead>
                   <tr>
@@ -389,9 +351,9 @@ export const RelationalView: React.FC = () => {
                 <tbody>
                   {activeRows.slice(0, 15).map((row, idx) => (
                     <tr key={idx} className={idx % 2 === 1 ? 'row-zebra' : ''}>
-                      <td className="cell-index mono" style={{ padding: '3px 6px' }}>{idx + 1}</td>
+                      <td className="cell-index mono" style={{ padding: '4px 8px' }}>{idx + 1}</td>
                       {activeTable.columns.map((c) => (
-                        <td key={c.name} className="cell-data mono" style={{ padding: '3px 8px' }}>
+                        <td key={c.name} className="cell-data mono" style={{ padding: '4px 8px' }}>
                           {row[c.name] !== null && row[c.name] !== undefined ? String(row[c.name]) : <span className="null-badge">null</span>}
                         </td>
                       ))}

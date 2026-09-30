@@ -10,47 +10,92 @@ function mulberry32(seed: number) {
   };
 }
 
-const FIRST_NAMES_US = ['Emma', 'Liam', 'Olivia', 'Noah', 'Ava', 'Ethan', 'Sophia', 'Lucas', 'Mia', 'Mason', 'Isabella', 'Alexander', 'Charlotte', 'Benjamin', 'Amelia', 'James'];
-const LAST_NAMES_US = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson'];
+// Realistic Pakistani names (Ahmed Raza, Bilal Khan, Ayesha Malik, Hamza Ali, etc.)
+const PAKISTANI_PROFILES = [
+  { first: 'Ahmed', last: 'Raza' },
+  { first: 'Bilal', last: 'Khan' },
+  { first: 'Ayesha', last: 'Malik' },
+  { first: 'Hamza', last: 'Ali' },
+  { first: 'Zainab', last: 'Bibi' },
+  { first: 'Fatima', last: 'Noor' },
+  { first: 'Usman', last: 'Tariq' },
+  { first: 'Omar', last: 'Farooq' },
+  { first: 'Sana', last: 'Tariq' },
+  { first: 'Ali', last: 'Hassan' },
+  { first: 'Maryam', last: 'Siddiqui' },
+  { first: 'Mustafa', last: 'Shah' },
+  { first: 'Danish', last: 'Qureshi' },
+  { first: 'Saad', last: 'Abbasi' },
+  { first: 'Hira', last: 'Gill' },
+  { first: 'Zoya', last: 'Chaudhry' },
+];
 
-const FIRST_NAMES_DE = ['Lukas', 'Maximilian', 'Leon', 'Paul', 'Felix', 'Sophie', 'Marie', 'Maria', 'Mia', 'Emma', 'Hannah', 'Jonas', 'Anna', 'Tim', 'Laura'];
-const LAST_NAMES_DE = ['Mueller', 'Schmidt', 'Schneider', 'Fischer', 'Weber', 'Meyer', 'Wagner', 'Becker', 'Schulz', 'Hoffmann', 'Schaefer', 'Koch', 'Bauer', 'Richter', 'Klein'];
+const FIRST_NAMES_PK = PAKISTANI_PROFILES.map((p) => p.first);
+const LAST_NAMES_PK = PAKISTANI_PROFILES.map((p) => p.last);
 
-const FIRST_NAMES_IN = ['Aarav', 'Vihaan', 'Aditya', 'Reyansh', 'Muhammad', 'Saanvi', 'Ananya', 'Aadhya', 'Diya', 'Pari', 'Arjun', 'Kabir', 'Ishaan', 'Rohan', 'Tanvi'];
-const LAST_NAMES_IN = ['Sharma', 'Verma', 'Patel', 'Reddy', 'Singh', 'Kumar', 'Gupta', 'Iyer', 'Chatterjee', 'Mehta', 'Joshi', 'Chopra', 'Malhotra', 'Bhat', 'Nair'];
+const FIRST_NAMES_DE = [
+  'Lukas', 'Maximilian', 'Leon', 'Paul', 'Felix', 'Sophie', 'Marie',
+  'Maria', 'Mia', 'Emma', 'Hannah', 'Jonas', 'Anna', 'Tim', 'Laura'
+];
+const LAST_NAMES_DE = [
+  'Mueller', 'Schmidt', 'Schneider', 'Fischer', 'Weber', 'Meyer',
+  'Wagner', 'Becker', 'Schulz', 'Hoffmann', 'Schaefer', 'Koch', 'Bauer'
+];
 
-const CITIES_US = ['New York', 'San Francisco', 'Chicago', 'Austin', 'Seattle', 'Boston', 'Denver', 'Atlanta', 'Portland', 'Miami'];
-const CITIES_DE = ['Berlin', 'Munich', 'Hamburg', 'Frankfurt', 'Cologne', 'Stuttgart', 'Dusseldorf', 'Leipzig', 'Dresden', 'Bonn'];
-const CITIES_IN = ['Bengaluru', 'Mumbai', 'Delhi', 'Hyderabad', 'Pune', 'Chennai', 'Kolkata', 'Ahmedabad', 'Jaipur', 'Noida'];
+// Mixed international pool with Pakistani names included
+const FIRST_NAMES_GLOBAL = [
+  'Ahmed', 'Bilal', 'Ayesha', 'Hamza', 'Emma', 'Liam', 'Olivia', 'Noah',
+  'Lucas', 'Sophia', 'Alexander', 'Zainab', 'Fatima', 'Marcus', 'Elena', 'Usman'
+];
+const LAST_NAMES_GLOBAL = [
+  'Raza', 'Khan', 'Malik', 'Ali', 'Smith', 'Johnson', 'Williams', 'Brown',
+  'Miller', 'Davis', 'Tariq', 'Farooq', 'Wilson', 'Anderson', 'Siddiqui', 'Shah'
+];
+
+const CITIES_PK = [
+  'Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad',
+  'Peshawar', 'Multan', 'Quetta', 'Sialkot', 'Gujranwala'
+];
+const CITIES_US = [
+  'New York', 'San Francisco', 'Chicago', 'Austin', 'Seattle',
+  'Boston', 'Denver', 'Atlanta', 'Portland', 'Miami'
+];
+const CITIES_DE = [
+  'Berlin', 'Munich', 'Hamburg', 'Frankfurt', 'Cologne',
+  'Stuttgart', 'Dusseldorf', 'Leipzig', 'Dresden', 'Bonn'
+];
 
 const COMPANIES = [
-  'Acme Global Solutions',
-  'Vanguard Logistics Ltd',
-  'Apex Cloud Systems',
+  'Apex Technologies Ltd',
+  'Vanguard Logistics PK',
+  'Indus Cloud Networks',
   'Summit Media Group',
-  'Horizon Biotech Labs',
+  'Horizon Labs & Systems',
   'Nordic Digital GmbH',
   'Helios Health Tech',
   'Pinnacle Dynamics',
   'Quantum Wave Corp',
-  'Starlight Ventures',
+  'Karakoram Ventures',
 ];
 
 const PRODUCTS = [
-  'Enterprise Cloud Node v4',
-  'Ergonomic Mechanical Keyboard',
-  'Precision Stylus Pro',
+  'Cloud Server Cluster v4',
+  'Mechanical Keyboard Pro',
+  'Precision Stylus Pen',
   'Ultra-Wide 4K IPS Monitor',
-  'Smart IoT Industrial Sensor',
-  'Noise-Canceling ANC Headset',
-  'High-Speed USB-C Thunderbolt Dock',
-  'Encrypted Hardware Token',
-  'Low-Latency Fiber Transceiver',
-  'Biometric Access Controller',
+  'IoT Industrial Sensor Node',
+  'Noise-Canceling Wireless Headset',
+  'USB-C Thunderbolt Docking Station',
+  'Encrypted Hardware Key',
+  'Gigabit Fiber Transceiver',
+  'Biometric Access Reader',
 ];
 
 const STATUSES = ['completed', 'pending', 'shipped', 'processing', 'delivered'];
-const ROLES = ['Product Manager', 'Staff Engineer', 'Data Scientist', 'DevOps Architect', 'Security Analyst', 'VP of Product', 'Lead Designer'];
+const ROLES = [
+  'Product Manager', 'Staff Engineer', 'Data Scientist',
+  'DevOps Architect', 'Security Analyst', 'VP of Engineering', 'Lead Designer'
+];
 
 export function generateClientMockRows(
   table: Table,
@@ -63,9 +108,12 @@ export function generateClientMockRows(
   const prng = mulberry32(seed + table.name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0));
   const rows: Record<string, unknown>[] = [];
 
-  const firstNames = locale === 'de_DE' ? FIRST_NAMES_DE : locale === 'en_IN' ? FIRST_NAMES_IN : FIRST_NAMES_US;
-  const lastNames = locale === 'de_DE' ? LAST_NAMES_DE : locale === 'en_IN' ? LAST_NAMES_IN : LAST_NAMES_US;
-  const cities = locale === 'de_DE' ? CITIES_DE : locale === 'en_IN' ? CITIES_IN : CITIES_US;
+  const isPakistani = locale === 'en_PK';
+  const isGerman = locale === 'de_DE';
+
+  const firstNames = isPakistani ? FIRST_NAMES_PK : isGerman ? FIRST_NAMES_DE : FIRST_NAMES_GLOBAL;
+  const lastNames = isPakistani ? LAST_NAMES_PK : isGerman ? LAST_NAMES_DE : LAST_NAMES_GLOBAL;
+  const cities = isPakistani ? CITIES_PK : isGerman ? CITIES_DE : CITIES_US;
 
   let parentMax = 50;
   if (allTables) {
@@ -79,8 +127,16 @@ export function generateClientMockRows(
     const row: Record<string, unknown> = {};
     let isChaosRow = false;
 
-    const fName = firstNames[Math.floor(prng() * firstNames.length)];
-    const lName = lastNames[Math.floor(prng() * lastNames.length)];
+    // Guaranteed inclusion of core realistic names in first rows
+    let fName = firstNames[Math.floor(prng() * firstNames.length)];
+    let lName = lastNames[Math.floor(prng() * lastNames.length)];
+
+    if (i < PAKISTANI_PROFILES.length && (isPakistani || prng() < 0.4)) {
+      const p = PAKISTANI_PROFILES[i];
+      fName = p.first;
+      lName = p.last;
+    }
+
     const username = `${fName.toLowerCase()}.${lName.toLowerCase()}${Math.floor(prng() * 89 + 10)}`;
 
     for (const col of table.columns) {
@@ -105,7 +161,13 @@ export function generateClientMockRows(
 
       switch (col.semantic_type) {
         case 'id':
-          if (col.name.includes('parent') || col.name.includes('customer') || col.name.includes('user') || col.name.includes('org') || col.name.includes('holder')) {
+          if (
+            col.name.includes('parent') ||
+            col.name.includes('customer') ||
+            col.name.includes('user') ||
+            col.name.includes('org') ||
+            col.name.includes('holder')
+          ) {
             if (!col.pk) {
               row[col.name] = Math.floor(prng() * parentMax) + 1;
               break;
@@ -131,10 +193,10 @@ export function generateClientMockRows(
           break;
 
         case 'phone':
-          if (locale === 'de_DE') {
+          if (isPakistani) {
+            row[col.name] = `+92-300-${Math.floor(prng() * 8999999 + 1000000)}`;
+          } else if (isGerman) {
             row[col.name] = `+49-30-${Math.floor(prng() * 899999 + 100000)}`;
-          } else if (locale === 'en_IN') {
-            row[col.name] = `+91-98765-${Math.floor(prng() * 89999 + 10000)}`;
           } else {
             row[col.name] = `+1-555-01${Math.floor(prng() * 89 + 10)}`;
           }
@@ -149,12 +211,18 @@ export function generateClientMockRows(
           break;
 
         case 'country':
-          row[col.name] = locale === 'de_DE' ? 'Germany' : locale === 'en_IN' ? 'India' : 'United States';
+          row[col.name] = isPakistani ? 'Pakistan' : isGerman ? 'Germany' : 'United States';
           break;
 
         case 'money': {
-          const baseAmount = prng() * 850 + 25;
-          row[col.name] = Math.round(baseAmount * 100) / 100;
+          // Prices use PKR when en_PK, otherwise USD
+          if (isPakistani) {
+            const baseAmount = prng() * 45000 + 1500;
+            row[col.name] = Math.round(baseAmount * 100) / 100;
+          } else {
+            const baseAmount = prng() * 850 + 25;
+            row[col.name] = Math.round(baseAmount * 100) / 100;
+          }
           break;
         }
 
@@ -207,7 +275,7 @@ export function generateClientMockRows(
       }
 
       if (chaosEnabled && !col.pk && (col.dtype === 'int' || col.dtype === 'decimal') && prng() < 0.02) {
-        row[col.name] = 999999.99;
+        row[col.name] = isPakistani ? 9999999.00 : 999999.99;
         isChaosRow = true;
       }
     }

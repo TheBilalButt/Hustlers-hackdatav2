@@ -9,10 +9,10 @@ export interface PresetInfo {
 
 export const PRESET_ECOMMERCE: Dataset = {
   ir_version: '1.0',
-  name: 'Ecommerce Store Demo',
+  name: 'Retail Store & Orders',
   mode: 'schema_only',
   seed: 42,
-  locale: 'en_IN',
+  locale: 'en_PK',
   tables: [
     {
       name: 'customers',
@@ -61,26 +61,26 @@ export const PRESET_ECOMMERCE: Dataset = {
           name: 'product_id',
           semantic_type: 'id',
           dtype: 'int',
-          generator: { kind: 'sequence', start: 201, step: 1 },
+          generator: { kind: 'sequence', start: 101, step: 1 },
           pk: true,
         },
         {
-          name: 'product_name',
+          name: 'name',
           semantic_type: 'product_name',
           dtype: 'str',
-          generator: { kind: 'faker', provider: 'product_name' },
+          generator: { kind: 'faker', provider: 'commerce.product_name' },
         },
         {
-          name: 'unit_price',
+          name: 'category',
+          semantic_type: 'category',
+          dtype: 'str',
+          generator: { kind: 'categorical', values: ['Electronics', 'Accessories', 'Hardware', 'Peripherals'] },
+        },
+        {
+          name: 'price',
           semantic_type: 'money',
           dtype: 'decimal',
-          generator: { kind: 'numeric', dist: 'uniform', min_val: 15.0, max_val: 450.0 },
-        },
-        {
-          name: 'in_stock',
-          semantic_type: 'boolean',
-          dtype: 'bool',
-          generator: { kind: 'categorical', values: ['true', 'false'], weights: [0.85, 0.15] },
+          generator: { kind: 'numeric', dist: 'uniform', min_val: 1200.0, max_val: 45000.0 },
         },
       ],
     },
@@ -92,7 +92,7 @@ export const PRESET_ECOMMERCE: Dataset = {
           name: 'order_id',
           semantic_type: 'id',
           dtype: 'int',
-          generator: { kind: 'sequence', start: 1001, step: 1 },
+          generator: { kind: 'sequence', start: 10001, step: 1 },
           pk: true,
         },
         {
@@ -105,7 +105,7 @@ export const PRESET_ECOMMERCE: Dataset = {
           name: 'total_amount',
           semantic_type: 'money',
           dtype: 'decimal',
-          generator: { kind: 'numeric', dist: 'uniform', min_val: 25.0, max_val: 1250.0 },
+          generator: { kind: 'numeric', dist: 'uniform', min_val: 2500.0, max_val: 85000.0 },
         },
         {
           name: 'status',
@@ -139,7 +139,7 @@ export const PRESET_ECOMMERCE: Dataset = {
 
 export const PRESET_SAAS: Dataset = {
   ir_version: '1.0',
-  name: 'SaaS CRM & Subscriptions',
+  name: 'SaaS Platform & CRM',
   mode: 'schema_only',
   seed: 101,
   locale: 'en_US',
@@ -260,10 +260,10 @@ export const PRESET_SAAS: Dataset = {
 
 export const PRESET_BANKING: Dataset = {
   ir_version: '1.0',
-  name: 'Retail Banking & Transactions',
+  name: 'Commercial Banking & Ledger',
   mode: 'schema_only',
   seed: 777,
-  locale: 'de_DE',
+  locale: 'en_US',
   tables: [
     {
       name: 'account_holders',
@@ -376,20 +376,20 @@ export const PRESET_BANKING: Dataset = {
 export const PRESETS: Record<string, PresetInfo> = {
   ecommerce: {
     id: 'ecommerce',
-    name: 'Retail & E-commerce',
-    description: 'Customers, products, and orders with regional addresses & currencies',
+    name: 'Retail Store & Orders',
+    description: 'Customers, products, and regional orders in PKR and USD',
     dataset: PRESET_ECOMMERCE,
   },
   saas: {
     id: 'saas',
-    name: 'SaaS CRM',
-    description: 'B2B Organizations, seats, team members, and subscription invoices',
+    name: 'SaaS Platform & CRM',
+    description: 'Business accounts, team members, seats, and subscription invoices in USD',
     dataset: PRESET_SAAS,
   },
   banking: {
     id: 'banking',
-    name: 'Retail Banking',
-    description: 'Holders, multi-currency accounts, and ledger transactions',
+    name: 'Commercial Banking & Ledger',
+    description: 'Holders, accounts, and ledger transactions in USD & PKR',
     dataset: PRESET_BANKING,
   },
 };

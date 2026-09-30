@@ -10,10 +10,19 @@ import { fetchHealth } from './api/client';
 import { useLivePreview } from './hooks/useLivePreview';
 
 export const App: React.FC = () => {
-  const { mode, isOffline, setIsOffline } = useAppStore();
+  const { mode, isOffline, setIsOffline, theme } = useAppStore();
 
-  // Wire live debounced preview generation (FR-18)
+  // Wire live debounced preview generation
   useLivePreview();
+
+  // Sync theme with document class
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
 
   useEffect(() => {
     fetchHealth()
@@ -26,13 +35,13 @@ export const App: React.FC = () => {
   }, [setIsOffline]);
 
   return (
-    <div className="app-container">
+    <div className={`app-container ${theme}`}>
       <Header />
       <ProofBar />
 
       {isOffline && (
         <div className="degraded-banner" role="status">
-          AI drafting is offline. Built-in templates, rules, and generators are active; all core generation and export features work deterministically.
+          Local engine active. Deterministic generation, relational constraints, and documents run directly in your browser.
         </div>
       )}
 

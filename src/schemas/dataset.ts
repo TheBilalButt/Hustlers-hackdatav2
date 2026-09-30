@@ -1,4 +1,4 @@
-﻿import { z } from 'zod';
+import { z } from 'zod';
 
 export const identifierRegex = /^[A-Za-z_][A-Za-z0-9_]{0,62}$/;
 
@@ -124,7 +124,7 @@ export const tableSchema = z.object({
   columns: z.array(columnSchema).min(1).max(64),
 });
 
-export const localeSchema = z.enum(['en_US', 'en_IN', 'de_DE']);
+export const localeSchema = z.enum(['en_US', 'en_PK', 'en_IN', 'de_DE']);
 
 export const datasetSchema = z.object({
   ir_version: z.literal('1.0'),

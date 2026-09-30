@@ -1,7 +1,6 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useAppStore } from '../state/store';
 import type { Column, DType, LocaleCode, PrivacyMode, SemanticType } from '../types/ir';
-import { validateIdentifier } from '../schemas/dataset';
 
 export const ConfigPanel: React.FC = () => {
   const {
@@ -19,31 +18,26 @@ export const ConfigPanel: React.FC = () => {
     getEstimates,
   } = useAppStore();
 
-  const [newTableName, setNewTableName] = useState('');
+  const [expandedCol, setExpandedCol] = useState<string | null>(null);
   const [showAddTable, setShowAddTable] = useState(false);
-  const [editingColName, setEditingColName] = useState<string | null>(null);
+  const [newTableName, setNewTableName] = useState('');
+  const [showAddCol, setShowAddCol] = useState(false);
+  const [newColName, setNewColName] = useState('');
+  const [newColType, setNewColType] = useState<SemanticType>('text_short');
 
   const table = dataset.tables.find((t) => t.name === selectedTable) || dataset.tables[0];
   const estimates = getEstimates();
 
-  const handleCreateNewTable = (e: React.FormEvent) => {
+  const handleAddTable = (e: React.FormEvent) => {
     e.preventDefault();
-    const clean = newTableName.trim().toLowerCase();
-    if (!validateIdentifier(clean)) {
-      alert('Invalid table name. Use alphanumeric characters and underscores, starting with a letter.');
-      return;
-    }
-    if (dataset.tables.some((t) => t.name === clean)) {
-      alert('A table with this name already exists.');
-      return;
-    }
-
+    if (!newTableName.trim()) return;
+    const name = newTableName.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
     addTable({
-      name: clean,
+      name,
       row_count: 500,
       columns: [
         {
-          name: `${clean}_id`,
+          name: `${name}_id`,
           semantic_type: 'id',
           dtype: 'int',
           generator: { kind: 'sequence', start: 1, step: 1 },
@@ -55,102 +49,100 @@ export const ConfigPanel: React.FC = () => {
     setShowAddTable(false);
   };
 
-  const handleCreateNewColumn = () => {
-    if (!table) return;
-    let colIndex = table.columns.length + 1;
-    let colName = `col_${colIndex}`;
-    while (table.columns.some((c) => c.name === colName)) {
-      colIndex++;
-      colName = `col_${colIndex}`;
-    }
+  const handleAddColumn = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!table || !newColName.trim()) return;
+    const colName = newColName.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
 
-    const newCol: Column = {
+    let dtype: DType = 'str';
+    if (newColType === 'id' || newColType === 'quantity' || newColType === 'integer') dtype = 'int';
+    else if (newColType === 'money' || newColType === 'float' || newColType === 'percent') dtype = 'decimal';
+    else if (newColType === 'date' || newColType === 'datetime') dtype = 'date';
+    else if (newColType === 'boolean') dtype = 'bool';
+
+    const col: Column = {
       name: colName,
-      semantic_type: 'text_short',
-      dtype: 'str',
-      generator: { kind: 'faker', provider: 'text_short' },
+      semantic_type: newColType,
+      dtype,
+      generator: { kind: 'faker', provider: newColType },
       nullable: false,
       null_rate: 0,
       outlier_rate: 0,
-      pk: false,
     };
 
-    addColumn(table.name, newCol);
-    setEditingColName(colName);
+    addColumn(table.name, col);
+    setNewColName('');
+    setShowAddCol(false);
+    setExpandedCol(colName);
   };
 
   return (
-    <aside className="config-panel" aria-label="Dataset Configuration Panel">
-      {/* Tables Section */}
+    <aside className="config-sidebar" aria-label="Schema Configuration">
+      {/* Tables Selection Section */}
       <section className="config-section">
         <div className="section-header">
-          <h2 className="section-title">Tables</h2>
+          <h2 className="section-title">Tables ({dataset.tables.length})</h2>
           <button
             type="button"
-            className="btn-icon-subtle"
+            className="btn btn-sm btn-outline"
             onClick={() => setShowAddTable(!showAddTable)}
-            title="Add a new table"
           >
-            {showAddTable ? '✕' : '+ Table'}
+            {showAddTable ? 'Cancel' : '+ Add Table'}
           </button>
         </div>
 
         {showAddTable && (
-          <form onSubmit={handleCreateNewTable} className="add-table-form">
+          <form onSubmit={handleAddTable} className="add-table-form">
             <input
               type="text"
+              placeholder="Table name (e.g. shipments)"
               className="input-text"
-              placeholder="table_name"
               value={newTableName}
               onChange={(e) => setNewTableName(e.target.value)}
               autoFocus
             />
             <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-              <button type="submit" className="btn btn-primary btn-sm">Add</button>
-              <button
-                type="button"
-                className="btn btn-outline btn-sm"
-                onClick={() => setShowAddTable(false)}
-              >
+              <button type="submit" className="btn btn-sm btn-primary">Create</button>
+              <button type="button" className="btn btn-sm btn-outline" onClick={() => setShowAddTable(false)}>
                 Cancel
               </button>
             </div>
           </form>
         )}
 
-        <div className="table-pill-list">
+        <div className="table-list">
           {dataset.tables.map((t) => {
-            const isSelected = t.name === selectedTable;
+            const isSelected = t.name === table?.name;
             return (
               <div
                 key={t.name}
-                className={`table-item ${isSelected ? 'selected' : ''}`}
-                onClick={() => {
-                  setSelectedTable(t.name);
-                  setEditingColName(null);
-                }}
+                className={`table-item ${isSelected ? 'active' : ''}`}
+                onClick={() => setSelectedTable(t.name)}
+                role="button"
+                tabIndex={0}
               >
                 <div className="table-item-name">
-                  <span className="table-icon">▦</span>
-                  <span className="mono font-bold">{t.name}</span>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: isSelected ? 1 : 0.6 }}>
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <line x1="3" y1="9" x2="21" y2="9" />
+                    <line x1="9" y1="21" x2="9" y2="9" />
+                  </svg>
+                  <span className="mono">{t.name}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span className="table-item-rows mono">
-                    {(t.row_count || 1000).toLocaleString()} rows
-                  </span>
+                  <span className="table-item-rows mono">{t.row_count || 1000}</span>
                   {dataset.tables.length > 1 && (
                     <button
                       type="button"
                       className="btn-delete-chip"
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (confirm(`Remove table ${t.name}?`)) {
-                          removeTable(t.name);
-                        }
+                        removeTable(t.name);
                       }}
                       title="Delete table"
+                      aria-label={`Delete table ${t.name}`}
                     >
-                      ×
+                      ✕
                     </button>
                   )}
                 </div>
@@ -160,192 +152,142 @@ export const ConfigPanel: React.FC = () => {
         </div>
       </section>
 
-      {/* Row Count Controller */}
+      {/* Selected Table Row Count Controls */}
       {table && (
         <section className="config-section">
           <div className="section-header">
-            <label htmlFor="row-count-input" className="section-title">Planned Rows</label>
-            <span className="mono font-bold" style={{ fontSize: 13, color: 'var(--teal)' }}>
+            <h2 className="section-title">Row Count: <span className="mono">{table.name}</span></h2>
+            <span className="mono font-bold" style={{ fontSize: 12 }}>
               {(table.row_count || 1000).toLocaleString()}
             </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
             <input
-              id="row-count-input"
               type="range"
-              min={50}
+              min={10}
               max={10000}
               step={50}
               value={table.row_count || 1000}
               onChange={(e) => setTableRows(table.name, parseInt(e.target.value, 10))}
               className="range-slider"
             />
-            <input
-              type="number"
-              className="input-number-compact mono"
-              min={1}
-              max={50000}
-              value={table.row_count || 1000}
-              onChange={(e) => setTableRows(table.name, parseInt(e.target.value, 10) || 100)}
-            />
-          </div>
-          <div className="preset-chips">
-            {[500, 1000, 2500, 5000, 10000].map((count) => (
-              <button
-                key={count}
-                type="button"
-                className="chip-sm"
-                onClick={() => setTableRows(table.name, count)}
-              >
-                {count >= 1000 ? `${count / 1000}k` : count}
-              </button>
-            ))}
+            <div className="preset-chips">
+              {[100, 500, 1000, 5000].map((num) => (
+                <button
+                  key={num}
+                  type="button"
+                  className="chip-sm"
+                  onClick={() => setTableRows(table.name, num)}
+                >
+                  {num >= 1000 ? `${num / 1000}k` : num}
+                </button>
+              ))}
+            </div>
           </div>
         </section>
       )}
 
-      {/* Columns Section */}
+      {/* Columns List & Schema Config */}
       {table && (
-        <section className="config-section" style={{ flex: 1 }}>
+        <section className="config-section" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div className="section-header">
             <h2 className="section-title">Columns ({table.columns.length})</h2>
             <button
               type="button"
-              className="btn btn-primary btn-sm"
-              onClick={handleCreateNewColumn}
+              className="btn btn-sm btn-outline"
+              onClick={() => setShowAddCol(!showAddCol)}
             >
-              + Column
+              {showAddCol ? 'Cancel' : '+ Add Column'}
             </button>
           </div>
 
+          {showAddCol && (
+            <form onSubmit={handleAddColumn} className="add-table-form" style={{ marginBottom: 8 }}>
+              <input
+                type="text"
+                placeholder="Column name (e.g. status)"
+                className="input-text"
+                value={newColName}
+                onChange={(e) => setNewColName(e.target.value)}
+                autoFocus
+                style={{ marginBottom: 6 }}
+              />
+              <div style={{ display: 'flex', gap: 6 }}>
+                <select
+                  className="input-select"
+                  value={newColType}
+                  onChange={(e) => setNewColType(e.target.value as SemanticType)}
+                  style={{ flex: 1 }}
+                >
+                  <option value="text_short">Short Text</option>
+                  <option value="person_name">Person Name</option>
+                  <option value="email">Email</option>
+                  <option value="phone">Phone</option>
+                  <option value="city">City</option>
+                  <option value="money">Money / Price</option>
+                  <option value="date">Date</option>
+                  <option value="category">Category</option>
+                  <option value="company">Company</option>
+                  <option value="integer">Integer</option>
+                  <option value="boolean">Boolean</option>
+                </select>
+                <button type="submit" className="btn btn-sm btn-primary">Add</button>
+              </div>
+            </form>
+          )}
+
           <div className="column-list-scroll">
             {table.columns.map((col) => {
-              const isEditing = editingColName === col.name;
+              const isExpanded = expandedCol === col.name;
               return (
-                <div
-                  key={col.name}
-                  className={`column-card ${isEditing ? 'expanded' : ''}`}
-                >
+                <div key={col.name} className={`column-card ${isExpanded ? 'expanded' : ''}`}>
                   <div
                     className="column-card-header"
-                    onClick={() => setEditingColName(isEditing ? null : col.name)}
+                    onClick={() => setExpandedCol(isExpanded ? null : col.name)}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      {col.pk && <span className="pk-badge" title="Primary Key">PK</span>}
-                      <span className="mono font-bold" style={{ fontSize: 13 }}>{col.name}</span>
+                      {col.pk && <span className="pk-badge">PK</span>}
+                      <span className="mono font-bold" style={{ fontSize: 12 }}>{col.name}</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span className="type-tag">{col.semantic_type}</span>
-                      <span className="caret-icon">{isEditing ? '▾' : '▸'}</span>
+                      <span className="caret-icon">{isExpanded ? '▲' : '▼'}</span>
                     </div>
                   </div>
 
-                  {isEditing && (
+                  {isExpanded && (
                     <div className="column-edit-body">
-                      <div className="form-field">
-                        <label className="field-label">Name</label>
-                        <input
-                          type="text"
-                          className="input-text mono"
-                          value={col.name}
-                          onChange={(e) => {
-                            const val = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
-                            updateColumn(table.name, col.name, { name: val });
-                            setEditingColName(val);
-                          }}
-                        />
-                      </div>
-
                       <div className="form-row">
                         <div className="form-field" style={{ flex: 1 }}>
                           <label className="field-label">Semantic Type</label>
                           <select
                             className="input-select"
                             value={col.semantic_type}
-                            onChange={(e) => {
-                              const sem = e.target.value as SemanticType;
-                              let gen = col.generator;
-                              let dt: DType = col.dtype;
-
-                              if (sem === 'id') {
-                                gen = { kind: 'sequence', start: 1, step: 1 };
-                                dt = 'int';
-                              } else if (sem === 'money') {
-                                gen = { kind: 'numeric', dist: 'uniform', min_val: 10, max_val: 500 };
-                                dt = 'decimal';
-                              } else if (sem === 'date' || sem === 'datetime') {
-                                gen = { kind: 'date_range', start: '2026-01-01', end: '2026-09-29' };
-                                dt = sem === 'date' ? 'date' : 'datetime';
-                              } else if (sem === 'boolean') {
-                                gen = { kind: 'categorical', values: ['true', 'false'] };
-                                dt = 'bool';
-                              } else {
-                                gen = { kind: 'faker', provider: sem };
-                                dt = 'str';
-                              }
-
-                              updateColumn(table.name, col.name, {
-                                semantic_type: sem,
-                                generator: gen,
-                                dtype: dt,
-                              });
-                            }}
-                          >
-                            <optgroup label="Identifiers">
-                              <option value="id">id</option>
-                              <option value="sku">sku</option>
-                            </optgroup>
-                            <optgroup label="Personal">
-                              <option value="person_name">person_name</option>
-                              <option value="first_name">first_name</option>
-                              <option value="last_name">last_name</option>
-                              <option value="email">email</option>
-                              <option value="phone">phone</option>
-                              <option value="job_title">job_title</option>
-                            </optgroup>
-                            <optgroup label="Organization / Geo">
-                              <option value="company">company</option>
-                              <option value="street_address">street_address</option>
-                              <option value="city">city</option>
-                              <option value="country">country</option>
-                              <option value="postal_code">postal_code</option>
-                            </optgroup>
-                            <optgroup label="Financial & Numeric">
-                              <option value="money">money</option>
-                              <option value="quantity">quantity</option>
-                              <option value="integer">integer</option>
-                              <option value="float">float</option>
-                              <option value="percent">percent</option>
-                            </optgroup>
-                            <optgroup label="Dates & Categorical">
-                              <option value="date">date</option>
-                              <option value="datetime">datetime</option>
-                              <option value="category">category</option>
-                              <option value="boolean">boolean</option>
-                              <option value="product_name">product_name</option>
-                              <option value="text_short">text_short</option>
-                            </optgroup>
-                          </select>
-                        </div>
-
-                        <div className="form-field" style={{ width: 90 }}>
-                          <label className="field-label">Data Type</label>
-                          <select
-                            className="input-select mono"
-                            value={col.dtype}
                             onChange={(e) =>
                               updateColumn(table.name, col.name, {
-                                dtype: e.target.value as DType,
+                                semantic_type: e.target.value as SemanticType,
                               })
                             }
                           >
-                            <option value="int">int</option>
-                            <option value="decimal">decimal</option>
-                            <option value="float">float</option>
-                            <option value="str">str</option>
-                            <option value="bool">bool</option>
-                            <option value="date">date</option>
-                            <option value="datetime">datetime</option>
+                            <option value="id">ID / Identifier</option>
+                            <option value="person_name">Person Name</option>
+                            <option value="first_name">First Name</option>
+                            <option value="last_name">Last Name</option>
+                            <option value="email">Email Address</option>
+                            <option value="phone">Phone Number</option>
+                            <option value="city">City</option>
+                            <option value="country">Country</option>
+                            <option value="company">Company</option>
+                            <option value="job_title">Job Title</option>
+                            <option value="money">Money Amount</option>
+                            <option value="date">Date</option>
+                            <option value="category">Category / Status</option>
+                            <option value="product_name">Product Name</option>
+                            <option value="quantity">Quantity</option>
+                            <option value="integer">Integer</option>
+                            <option value="float">Float</option>
+                            <option value="boolean">Boolean</option>
                           </select>
                         </div>
                       </div>
@@ -398,9 +340,9 @@ export const ConfigPanel: React.FC = () => {
                         />
                       </div>
 
-                      {/* Privacy Mode */}
+                      {/* Privacy Rule */}
                       <div className="form-field">
-                        <label className="field-label">Privacy Control (FR-02)</label>
+                        <label className="field-label">Privacy Rule</label>
                         <select
                           className="input-select"
                           value={
@@ -428,15 +370,15 @@ export const ConfigPanel: React.FC = () => {
                           }}
                         >
                           <option value="none">None (Direct synthesis)</option>
-                          <option value="mask">Mask (*** anonymization)</option>
-                          <option value="hmac_hash">HMAC Hash (Deterministic pseudonyms)</option>
-                          <option value="drop">Drop (Omit from output)</option>
-                          <option value="generalize">Generalize (Bucket ranges)</option>
-                          <option value="dp_marginals">εε-DP Marginals (Laplace noise)</option>
+                          <option value="mask">Mask (Anonymize text)</option>
+                          <option value="hmac_hash">Deterministic Hash (Pseudonyms)</option>
+                          <option value="drop">Omit Column</option>
+                          <option value="generalize">Generalize Ranges</option>
+                          <option value="dp_marginals">Differential Privacy Noise</option>
                         </select>
                       </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
                         <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
                           <input
                             type="checkbox"
@@ -468,21 +410,20 @@ export const ConfigPanel: React.FC = () => {
       <section className="config-section meta-section">
         <div className="form-row">
           <div className="form-field" style={{ flex: 1 }}>
-            <label htmlFor="locale-select" className="field-label">Locale Pack</label>
+            <label htmlFor="locale-select" className="field-label">Currency & Locale</label>
             <select
               id="locale-select"
               className="input-select"
               value={dataset.locale}
               onChange={(e) => setLocale(e.target.value as LocaleCode)}
             >
-              <option value="en_US">en_US (US Dollar, RFC 2606)</option>
-              <option value="en_IN">en_IN (Indian Rupee, GST)</option>
-              <option value="de_DE">de_DE (Euro, DIN 5008)</option>
+              <option value="en_US">en_US (US Dollar, USD - $)</option>
+              <option value="en_PK">en_PK (Pakistani Rupee, PKR - ₨)</option>
             </select>
           </div>
 
           <div className="form-field" style={{ width: 110 }}>
-            <label className="field-label">Chaos Injection</label>
+            <label className="field-label">Chaos Test</label>
             <label className="toggle-switch">
               <input
                 type="checkbox"
@@ -497,9 +438,9 @@ export const ConfigPanel: React.FC = () => {
           </div>
         </div>
 
-        {/* Size Estimate Card (FR-18) */}
+        {/* Size Estimate Card */}
         <div className="estimates-card">
-          <div className="estimates-title">Estimated Generation Output</div>
+          <div className="estimates-title">Planned Output Summary</div>
           <div className="estimates-grid">
             <div className="estimate-col">
               <div className="estimate-val mono">{estimates.totalRows.toLocaleString()}</div>
