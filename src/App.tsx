@@ -10,7 +10,7 @@ import { fetchHealth } from './api/client';
 import { useLivePreview } from './hooks/useLivePreview';
 
 export const App: React.FC = () => {
-  const { mode, isOffline, setIsOffline, theme } = useAppStore();
+  const { mode, setIsOffline, theme } = useAppStore();
 
   // Wire live debounced preview generation
   useLivePreview();
@@ -38,12 +38,6 @@ export const App: React.FC = () => {
     <div className={`app-container ${theme}`}>
       <Header />
       <ProofBar />
-
-      {isOffline && (
-        <div className="degraded-banner" role="status">
-          Local engine active. Deterministic generation, relational constraints, and documents run directly in your browser.
-        </div>
-      )}
 
       <div className="app-body">
         {mode === 'tabular' && <TabularView />}
