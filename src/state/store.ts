@@ -3,7 +3,7 @@ import type { Dataset, Table, Column, LocaleCode, BackendTrustReport, MetricDeta
 import { PRESETS, PRESET_ECOMMERCE } from './presets';
 import { generateAllMockRows } from './mockGenerator';
 
-export type AppMode = 'tabular' | 'relational' | 'documents';
+export type AppMode = 'agent' | 'tabular' | 'relational' | 'documents';
 export type ThemeMode = 'light' | 'dark';
 
 export interface TrustReportSummary {
